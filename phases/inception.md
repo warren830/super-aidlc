@@ -229,6 +229,15 @@ Mark which units can run in parallel. This drives the build phase.
 | Question | Decision | Rationale |
 |----------|---------|-----------|
 | {from Step 2} | {what was decided} | {why} |
+
+## Alternatives Considered
+
+For each key decision above, record what was rejected:
+
+| Option | Verdict | Reason |
+|--------|---------|--------|
+| {Option A} | Rejected | {why} |
+| {Option B} | **Selected** | {why} |
 ```
 
 **MANDATORY outputs** -- the design doc MUST include ALL of these:
@@ -236,6 +245,7 @@ Mark which units can run in parallel. This drives the build phase.
 2. Error/Rescue Map (5+ rows)
 3. Units of Work table with parallelism markings
 4. Decisions Log
+5. Alternatives Considered (at least for architecture and storage decisions)
 
 If you skip any of these, you are doing plan mode, not super-aidlc.
 

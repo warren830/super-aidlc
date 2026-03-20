@@ -210,6 +210,20 @@ Append to `aidlc-docs/{date}-{feature-slug}/build-log.md`:
 ## Issues Encountered
 {Any problems and how they were resolved. "None" if clean.}
 
+## Approvals
+- Design approved: {timestamp or "auto-proceed for Light complexity"}
+- Security baseline: {enabled / skipped (reason)}
+- Ship approved: {timestamp or "pending"}
+
+## Alternatives Considered
+{For each key design decision, what was rejected and why.}
+
+| Option | Verdict | Reason |
+|--------|---------|--------|
+| {Option A} | Rejected | {why} |
+| {Option B} | Rejected | {why} |
+| {Option C} | **Selected** | {why} |
+
 ## Decisions Made During Build
 {Any implementation decisions not in the design doc.
 These feed back into the design doc or CLAUDE.md for next time.}
