@@ -309,3 +309,68 @@ Tests:          Super-AIDLC >= Superpowers > AIDLC
 | Regulated / compliance environment | AIDLC | Complete audit.md with timestamped approvals |
 | Pure speed on Heavy tasks | Superpowers | 25% faster than AIDLC, 33% faster than Super-AIDLC |
 | TDD discipline enforcement | Superpowers or Super-AIDLC | Both enforce iron law; AIDLC does not |
+
+---
+
+## Executive Summary (English)
+
+We ran 3 benchmark tests on the same TypeScript monorepo, comparing three AI development workflows: **AIDLC-workflows** (AWS open-source methodology), **Super-AIDLC** (our unified skill combining AIDLC + Superpowers + gstack), and **Superpowers** (TDD-focused skill by Prime Radiant).
+
+**Speed**: Superpowers is fastest on Heavy tasks (9 min vs 12-14 min). Super-AIDLC is fastest on Medium tasks (6.5 min vs 10 min for AIDLC). AIDLC falls in the middle on Heavy tasks.
+
+**Code quality**: Super-AIDLC and Superpowers both enforce strict TDD (test before code, always). AIDLC never wrote tests before implementation across all 3 tests. Super-AIDLC and Superpowers produce more modular architectures (SRP separation) and more tests (46-48 vs 35).
+
+**Documentation**: Super-AIDLC produces the richest artifacts -- architecture diagrams, error/rescue maps, decisions logs, alternatives considered, and audit-lite build logs. AIDLC produces complete audit trails (audit.md) but lacks visual aids and structured design docs. Superpowers produces zero persistent documentation.
+
+**Bottom line**:
+- **Choose Super-AIDLC** for team environments where design docs, audit trails, and TDD discipline all matter. It's the most balanced option.
+- **Choose Superpowers** for solo rapid development where speed and TDD are top priority and documentation isn't needed.
+- **Choose AIDLC** for regulated environments where complete audit trails with timestamped approvals are required.
+
+---
+
+## 总结（中文版）
+
+我们在同一个 TypeScript monorepo 上运行了 3 次基准测试，对比三个 AI 开发工作流：**AIDLC-workflows**（AWS 开源方法论）、**Super-AIDLC**（融合 AIDLC + Superpowers + gstack 的统一技能）、**Superpowers**（Prime Radiant 的 TDD 导向技能）。
+
+**速度**：Superpowers 在 Heavy 任务上最快（9 分钟 vs 12-14 分钟）。Super-AIDLC 在 Medium 任务上最快（6.5 分钟 vs AIDLC 的 10 分钟）。AIDLC 在 Heavy 任务上居中。
+
+**代码质量**：Super-AIDLC 和 Superpowers 都严格执行 TDD（先写测试再写代码，始终如此）。AIDLC 在全部 3 次测试中都没有先写测试。Super-AIDLC 和 Superpowers 产出更模块化的架构（单一职责分离）和更多测试（46-48 个 vs 35 个）。
+
+**文档产出**：Super-AIDLC 产出最丰富的产物——架构图、错误/救援映射表、决策日志、替代方案记录、审计精简版构建日志。AIDLC 产出完整审计追踪（audit.md），但缺少可视化辅助和结构化设计文档。Superpowers 不产出任何持久化文档。
+
+**结论**：
+
+| 场景 | 推荐 | 原因 |
+|------|------|------|
+| 团队协作环境 | **Super-AIDLC** | 设计文档 + 审计追踪 + TDD + 审查，最均衡的选择 |
+| 个人快速开发 | **Superpowers** | 最快速度 + 严格 TDD，不需要文档 |
+| 合规监管环境 | **AIDLC** | 完整的 audit.md 带时间戳审批记录 |
+| Bug 修复 / 小改动 | **Super-AIDLC** | Light 路由跳过流程开销，比 AIDLC 快 35% |
+| Heavy 任务要最快 | **Superpowers** | 比 AIDLC 快 25%，比 Super-AIDLC 快 33% |
+| 需要 TDD 纪律 | **Superpowers 或 Super-AIDLC** | 两者都执行铁律；AIDLC 从不做 TDD |
+
+### 三者取舍一图流
+
+```
+速度:       Superpowers > AIDLC > Super-AIDLC（Heavy 任务）
+            Super-AIDLC > AIDLC（Medium 任务）
+
+TDD:        Superpowers = Super-AIDLC >> AIDLC（从不做 TDD）
+
+文档:       Super-AIDLC >> AIDLC > Superpowers（零文档）
+
+审计:       AIDLC > Super-AIDLC >> Superpowers（零审计）
+
+模块化:     Super-AIDLC = Superpowers > AIDLC
+
+测试数量:   Super-AIDLC >= Superpowers > AIDLC
+```
+
+### 核心发现
+
+1. **Superpowers 最快但什么都不留** —— 没有设计文档、没有构建日志、没有审计。会话结束后一切消失。
+2. **Super-AIDLC 产出物最完整** —— 架构图 + 错误映射 + 决策日志 + 替代方案 + 审计精简版，团队环境下最有价值。
+3. **AIDLC 三次测试都没做 TDD** —— 这是方法论级别的缺陷，不是偶然。
+4. **Super-AIDLC 的审计精简版生效了** —— Approvals + Alternatives Considered 格式在 Test 3 中被正确使用，覆盖了 AIDLC 审计价值的 80%。
+5. **AIDLC 的 audit.md 仍是合规环境的金标准** —— 如果你在金融、医疗等强监管领域，AIDLC 的审计追踪最完整。
