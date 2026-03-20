@@ -1,6 +1,6 @@
-# Benchmark: Super-AIDLC vs AIDLC-workflows
+# Benchmark: Super-AIDLC vs AIDLC-workflows vs Superpowers
 
-Two A/B tests on the same codebase (claude-code-claw, TypeScript monorepo), same model (Claude Opus 4.6), run in parallel. AIDLC followed core-workflow.md. Super-AIDLC followed SKILL.md with phases/agents/rules.
+Three tests on the same codebase (claude-code-claw, TypeScript monorepo), same model (Claude Opus 4.6), run in parallel. AIDLC followed core-workflow.md. Super-AIDLC followed SKILL.md with phases/agents/rules. Superpowers followed its TDD/planning/review skills.
 
 ---
 
@@ -161,24 +161,151 @@ Super-AIDLC's separation follows the Single Responsibility Principle, making eac
 
 ---
 
+## Test 3: Heavy Complexity -- Output Schema Validation Pipeline (3-way)
+
+**Task**: Build a complete output schema validation pipeline: JSON Schema subset validator, fallback formatter (auto-correct violations), schema-aware retry prompt builder, message handler integration with warn/block/retry actions. 5 components across 3 packages.
+
+**Competitors**: AIDLC vs Super-AIDLC vs Superpowers
+
+### Efficiency
+
+| Metric | AIDLC | Super-AIDLC | Superpowers |
+|--------|-------|-------------|-------------|
+| Wall clock time | 720s (~12 min) | 816s (~13.6 min) | **544s (~9 min)** |
+| Token consumption | 146,406 | 118,240 | **102,900** |
+| Tool calls | 99 | 104 | **79** |
+
+Superpowers was fastest -- its lightweight planning (spec + task list) gets to code quickly. Super-AIDLC spent time on full design doc + two-stage review. AIDLC ran full Inception (Workspace Detection, Requirements, Workflow Planning, Application Design, Code Planning).
+
+### Code Quality
+
+| Metric | AIDLC | Super-AIDLC | Superpowers |
+|--------|-------|-------------|-------------|
+| New tests | 35 | 48 | 46 |
+| New test files | 4 | 5 | 5 |
+| New source files | 3 | 4 | 4 |
+| Modified files | 8 | 8 | 8 |
+| All tests pass | 518 | 512 | 504 |
+| Build | Pass | Pass | Pass |
+
+Super-AIDLC and Superpowers produced more tests (48 and 46 vs 35) and more modular code (separate validator, formatter, retry builder files). AIDLC embedded the validator into existing guardrail-checker.ts.
+
+### Architecture Comparison
+
+| Approach | AIDLC | Super-AIDLC | Superpowers |
+|----------|-------|-------------|-------------|
+| Validator | Extended guardrail-checker.ts | New schema-validator.ts | New schema-validator.ts |
+| Formatter | New schema-formatter.ts | New schema-formatter.ts | New fallback-formatter.ts |
+| Retry builder | New schema-retry.ts | New schema-retry-builder.ts | New schema-retry-builder.ts |
+| Separation | Mixed (validator in existing file) | Clean (all new files) | Clean (all new files) |
+
+Super-AIDLC and Superpowers both followed SRP with dedicated files per component. AIDLC extended the existing guardrail-checker.ts, which is pragmatic but reduces separation of concerns.
+
+### TDD Compliance
+
+| Check | AIDLC | Super-AIDLC | Superpowers |
+|-------|-------|-------------|-------------|
+| Tests before implementation | No | Yes | **Yes (strict)** |
+| RED phase verified | No | Yes | **Yes (every component)** |
+| GREEN phase verified | No | Yes | **Yes (every component)** |
+| Iron Law documented | No | In build-log | **In commit message** |
+
+Both Super-AIDLC and Superpowers enforced TDD. Superpowers was more explicit about it ("Iron Law upheld" in summary). AIDLC continued its pattern of code-first, tests-after.
+
+### Review Process
+
+| Check | AIDLC | Super-AIDLC | Superpowers |
+|-------|-------|-------------|-------------|
+| Independent review | No | Yes (spec + quality) | Yes (spec + code quality) |
+| Review documented | No | In build-log | Not in file (in process) |
+
+### Design Documentation
+
+| Artifact | AIDLC | Super-AIDLC | Superpowers |
+|----------|-------|-------------|-------------|
+| Architecture diagram | No | **Yes (pipeline flow)** | No |
+| Error/Rescue Map | No | Yes | No |
+| Units of Work | No | Yes (5 units, parallelism) | No |
+| Decisions Log | No | Yes | No |
+| Alternatives Considered | No | **Yes (4 alternatives)** | No |
+| Approvals section | No (audit.md instead) | **Yes** | No |
+| Audit trail | Yes (audit.md) | Build-log with audit-lite | No |
+| Total doc files | 8 | **2 (rich)** | **0** |
+
+Super-AIDLC produced the richest design documentation. Superpowers produced zero persistent documentation -- all design was in the agent's working memory, lost after completion.
+
+### Build Log Quality (Super-AIDLC only)
+
+The new audit-lite format was used successfully:
+- Approvals section: documented design auto-proceed, security baseline skip, ship pending
+- Alternatives Considered: 4 options evaluated (ajv library, extend guardrail-checker, monolith file, separate package) with clear rejection reasons
+- Issues Encountered: documented ts-jest resolution issue and fix
+- Decisions Made: 4 build-time decisions with rationale
+
+---
+
 ## Conclusions
 
-1. **Super-AIDLC excels at Medium tasks** -- 35% faster with equal quality. The complexity router correctly minimizes overhead.
+### Speed Rankings
 
-2. **Heavy tasks are a tradeoff** -- Super-AIDLC produces better-structured code and documentation but takes longer due to additional rigor (TDD verification, two-stage review, comprehensive design doc). When no unexpected issues occur, the two are roughly equal in time.
+| Task Type | Fastest | Middle | Slowest |
+|-----------|---------|--------|---------|
+| Medium | **Super-AIDLC** (390s) | -- | AIDLC (595s) |
+| Heavy (analytics) | **AIDLC** (742s) | -- | Super-AIDLC (1,105s*) |
+| Heavy (schema, 3-way) | **Superpowers** (544s) | AIDLC (720s) | Super-AIDLC (816s) |
 
-3. **TDD compliance is a consistent Super-AIDLC advantage** -- AIDLC never wrote tests before implementation across both tests. Super-AIDLC always did, catching the ts-jest issue early in the Heavy test.
+*Super-AIDLC hit ts-jest issue adding ~5 min; adjusted estimate ~800s.
 
-4. **AIDLC's audit trail is a consistent advantage** -- For compliance-heavy environments, AIDLC's audit.md with timestamped phase transitions is valuable. Super-AIDLC should consider adding this.
+### Quality Rankings
 
-5. **Design doc quality consistently favors Super-AIDLC** -- Architecture diagrams, error maps, and decisions logs are produced every time, regardless of complexity. AIDLC never produced these artifacts.
+| Dimension | Best | Middle | Weakest |
+|-----------|------|--------|---------|
+| TDD compliance | **Superpowers = Super-AIDLC** | -- | AIDLC (never TDD) |
+| Test count | **Super-AIDLC** (48) | Superpowers (46) | AIDLC (35) |
+| Code modularity | **Super-AIDLC = Superpowers** | -- | AIDLC (mixed into existing) |
+| Design documentation | **Super-AIDLC** (diagram + error map + decisions + alternatives) | AIDLC (audit.md) | Superpowers (none) |
+| Audit trail | **AIDLC** (complete audit.md) | Super-AIDLC (audit-lite) | Superpowers (none) |
+| Review process | **Super-AIDLC = Superpowers** (two-stage) | -- | AIDLC (none) |
+
+### Key Findings
+
+1. **Superpowers is fastest for Heavy tasks** -- lightweight planning (spec + task list) gets to code quickly. No design doc overhead, no complex phase routing. But this speed comes at the cost of zero persistent documentation.
+
+2. **Super-AIDLC produces the best artifacts** -- architecture diagrams, error maps, decisions logs, alternatives considered, audit-lite build logs. This is the most complete package for team environments where someone else needs to understand what was built and why.
+
+3. **AIDLC never does TDD** -- across all 3 tests (Medium, Heavy x2), AIDLC consistently wrote code before tests. This is a fundamental methodology gap, not a one-off.
+
+4. **Superpowers has no persistent memory** -- no design docs, no build logs, no audit trail. Everything lives in the agent's context and is lost when the session ends. For solo work this is fine; for teams it's a problem.
+
+5. **Super-AIDLC's audit-lite works** -- the new Approvals + Alternatives Considered format was used successfully in Test 3, providing 80% of AIDLC's audit value at minimal overhead.
+
+6. **AIDLC's audit.md is the most complete** -- for regulated environments (SOC2, HIPAA), AIDLC's timestamped phase transitions and approval records are the gold standard.
+
+### Tradeoff Summary
+
+```
+Speed:          Superpowers > AIDLC > Super-AIDLC (Heavy)
+                Super-AIDLC > AIDLC (Medium)
+
+TDD:            Superpowers = Super-AIDLC >> AIDLC
+
+Documentation:  Super-AIDLC >> AIDLC > Superpowers
+
+Audit:          AIDLC > Super-AIDLC >> Superpowers
+
+Modularity:     Super-AIDLC = Superpowers > AIDLC
+
+Tests:          Super-AIDLC >= Superpowers > AIDLC
+```
 
 ### When to Use Which
 
-| Scenario | Recommendation |
-|----------|---------------|
-| Bug fix, config change | Super-AIDLC (Light routing, fast TDD cycle) |
-| New feature, clear requirements | Super-AIDLC (Medium routing, -35% time, better design doc) |
-| Large system, multi-component | Either (roughly equal time; Super-AIDLC for better structure, AIDLC for audit trail) |
-| Regulated environment requiring audit | AIDLC (audit.md is more complete) |
-| Team with TDD discipline concerns | Super-AIDLC (mechanical enforcement, not voluntary) |
+| Scenario | Recommendation | Why |
+|----------|---------------|-----|
+| Bug fix, config change | Super-AIDLC | Light routing skips ceremony, TDD enforced |
+| New feature, clear requirements | Super-AIDLC | -35% time vs AIDLC, better design doc |
+| Rapid prototyping, solo dev | Superpowers | Fastest, strict TDD, no doc overhead |
+| Large system, team environment | Super-AIDLC | Best artifacts for team handoff + TDD + review |
+| Regulated / compliance environment | AIDLC | Complete audit.md with timestamped approvals |
+| Pure speed on Heavy tasks | Superpowers | 25% faster than AIDLC, 33% faster than Super-AIDLC |
+| TDD discipline enforcement | Superpowers or Super-AIDLC | Both enforce iron law; AIDLC does not |
