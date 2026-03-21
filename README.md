@@ -1,35 +1,74 @@
-# Super-AIDLC v3
+# Super-AIDLC
 
-A structured development skill for AI coding agents that combines adaptive lifecycle management, test-driven development enforcement, and production safety guards into a single workflow. It turns "vibe coding" into a repeatable process: assess complexity, design before code, build with TDD in parallel worktrees, review in two stages, and ship with verification evidence.
+> Stop vibe coding. Start engineering.
 
-> [Chinese version / 中文版](README_CN.md)
+Super-AIDLC is a structured development skill for AI coding agents. It assesses task complexity, designs before coding, builds with TDD in parallel worktrees, reviews in two stages, and auto-verifies until all green.
 
-## What Makes It Different
+> [Chinese version / 中文版](README_CN.md) | [Benchmark](BENCHMARK.md)
 
-Super-AIDLC merges the best of three proven systems, plus 4 unique capabilities no other tool has:
+## Why Not Just Use AIDLC / Superpowers / gstack?
 
-| Source | What We Take |
-|--------|-------------|
-| **[AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)** | Adaptive lifecycle, documentation-driven design, audit trail, extension system |
-| **[Superpowers](https://github.com/PrimeRadiantAI/superpowers)** | TDD iron law, sub-agent context isolation, two-stage review, rationalization prevention |
-| **[gstack](https://github.com/garrytan/gstack)** | Browser QA, safety guards (careful/freeze), investigate debugging, ship automation |
+We tested all three head-to-head on the same codebase ([benchmark results](BENCHMARK.md)). Each has a clear gap:
 
-### Unique to Super-AIDLC
+| Tool | Strength | Gap |
+|------|----------|-----|
+| **AIDLC-workflows** | Complete audit trail | Never does TDD. No independent review. No parallel builds. |
+| **Superpowers** | Fastest. Strict TDD. | Zero persistent documentation. Nothing survives the session. |
+| **gstack** | Browser QA. Safety guards. | No lifecycle management. No design phase. |
 
-These 4 features cannot be replicated by combining the other tools:
+Super-AIDLC takes the best from each, then adds 4 capabilities none of them have.
 
-1. **True Parallel Multi-Agent Builds** -- Independent units dispatch simultaneously to isolated worktrees via Agent tool. A Heavy task with 5 units runs in 1 round, not 5. Neither AIDLC nor Superpowers can do this.
+## 4 Unique Capabilities
 
-2. **Cross-Session Learning** -- Reads prior build logs to extract lessons: "last time ts-jest had resolution issues, here's how we fixed it." Each run teaches the next one. No other workflow remembers across sessions.
+### 1. True Parallel Multi-Agent Builds
 
-3. **Kiro Specs Deep Integration** -- Reads existing `.kiro/specs/` and `.kiro/steering/` before asking questions. If Kiro already has requirements, Super-AIDLC skips straight to building. Writes back completion status after construction.
+Independent units dispatch simultaneously to isolated git worktrees. A Heavy task with 5 units builds in 1 round, not 5.
 
-4. **Auto-Verification Loop** -- After building, runs test/build/lint automatically. Failures trigger the debugger agent, which fixes and re-verifies. Loops up to 3 times until all green. Other tools tell you to verify; Super-AIDLC verifies and fixes for you.
+```
+# In a SINGLE message, all 3 run at the same time:
+Agent(prompt: "Build U1...", isolation: "worktree")
+Agent(prompt: "Build U2...", isolation: "worktree")
+Agent(prompt: "Build U3...", isolation: "worktree")
+```
 
-## Supported Platforms
+AIDLC builds units sequentially. Superpowers builds sequentially. Only Super-AIDLC dispatches them in parallel.
 
-- **Kiro** (AWS AI IDE)
-- **Claude Code** (Anthropic CLI)
+### 2. Cross-Session Learning
+
+Reads prior `aidlc-docs/` build logs before starting. Extracts lessons learned, established patterns, and rejected alternatives. Each run makes the next one smarter.
+
+```
+## Lessons from Prior Runs
+- ts-jest has cross-package resolution issues with pnpm → use diagnostic ignore codes
+- This project uses SRP separation → one file per component
+- Rejected: ajv library (adds external dependency for small schema subset)
+```
+
+No other workflow remembers what happened last time.
+
+### 3. Kiro Specs Deep Integration
+
+If the project has `.kiro/specs/` or `.kiro/steering/`, Super-AIDLC reads them first:
+
+- **Specs already cover the feature?** Skip questions, use existing specs as design input.
+- **Specs partially cover it?** Pre-fill known answers, only ask about gaps.
+- **After building:** Write back completion status to `.kiro/specs/`.
+
+Super-AIDLC is not bolted onto Kiro -- it is Kiro-native.
+
+### 4. Auto-Verification Loop
+
+After building, Super-AIDLC doesn't just tell you to run tests. It runs them, and if they fail, it fixes them:
+
+```
+REPEAT (max 3):
+  Run tests   → FAIL? → dispatch debugger agent → fix → retry
+  Run build   → FAIL? → fix compilation errors → retry
+  Run lint    → FAIL? → fix lint errors → retry
+  All green?  → DONE
+```
+
+Other tools: "Please verify." Super-AIDLC: verifies, fixes, and re-verifies for you.
 
 ## Quick Start
 
@@ -47,80 +86,96 @@ git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 ~/super-aidlc/adapters/claude-code/install.sh /path/to/your/project
 ```
 
-Both installers create symlinks, so updates to this repo propagate automatically.
+Installers create symlinks -- `git pull` in `~/super-aidlc` updates all projects automatically.
 
-Then use in your AI agent: `/super-aidlc [describe what you want to build]`
+Then: `/super-aidlc [describe what you want to build]`
 
-## Workflow Overview
+## How It Works
 
-Every task starts with complexity assessment, then routes accordingly:
+Every task starts with complexity assessment:
 
-### Light (bug fix, config change)
-- Skip design, go straight to build
-- TDD still enforced: write failing test, fix, verify green
-- Single reviewer pass
+| Complexity | What Happens |
+|------------|-------------|
+| **Light** (bug fix, config) | Skip design. TDD build. Single review. Auto-verify. |
+| **Medium** (new feature) | Structured questions. Design doc. Parallel build. Two-stage review. Auto-verify. |
+| **Heavy** (new system, refactor) | Problem reframing. Full design with architecture diagram, error map, unit breakdown. Parallel build in worktrees. Two-stage review. Coverage audit. Auto-verify. |
 
-### Medium (new feature, moderate change)
-- Checklist-level questions (3-5 groups with options and recommendations)
-- Design doc with architecture diagram, error map, units of work
-- Parallel builder dispatch with worktree isolation
-- Two-stage review: spec compliance then code quality
+### The Full Heavy Pipeline
 
-### Heavy (new system, multi-component, major refactor)
-- Problem reframing before questions
-- Detailed questions including NFR, personas, architecture decisions
-- Full design doc with threat model (if security baseline enabled)
-- Scope challenge: "If you could only ship ONE unit, which delivers the most value?"
-- Parallel builders, two-stage review, coverage audit, optional browser QA
+```
+Inception:  Reframe problem → Ask questions → Design doc (diagram + error map + units) → Review → Approve
+               ↓
+Construction: [Builder U1] [Builder U2] [Builder U3]  ← parallel in worktrees, each with TDD
+               ↓               ↓              ↓
+            Spec Review → Quality Review → Merge → Coverage Audit
+               ↓
+Verify:     Test → Build → Lint → (fail? → debugger → fix → retry) → All green
+               ↓
+Ship:       Commit → Push → PR (with design doc + test results)
+```
+
+## Four Iron Laws
+
+1. **No production code without a failing test first.** Violations get deleted.
+2. **No fixes without root-cause investigation.** No shotgun debugging.
+3. **No completion claims without verification evidence.** "Should work" is not evidence.
+4. **No shipping without all-green verification loop.** Auto-fix up to 3 times.
 
 ## File Structure
 
 ```
 super-aidlc/
-  SKILL.md                        # Entry: complexity assessment + routing
+  SKILL.md                        # Entry: complexity routing + iron laws
   phases/
     inception.md                  # Design: questions -> design doc -> approval
-    construction.md               # Build: TDD + parallel agents + two-stage review
+    construction.md               # Build: parallel TDD + review + auto-verify
     operations.md                 # QA + Ship: browser QA, release, doc update
   agents/
-    researcher.md                 # Context filter (30-80 lines, cite sources)
+    researcher.md                 # Context filter + cross-session learning
     architect.md                  # Design doc producer (no code)
-    builder.md                    # TDD-enforced builder in worktree
-    spec-reviewer.md              # Pass 1: spec compliance (don't trust report)
-    quality-reviewer.md           # Pass 2: security + code quality
+    builder.md                    # TDD builder in isolated worktree
+    spec-reviewer.md              # Review pass 1: did you build what was asked?
+    quality-reviewer.md           # Review pass 2: is the code well-built?
     qa.md                         # Browser QA with Playwright (optional)
-    debugger.md                   # Root-cause investigation (no guessing)
+    debugger.md                   # Root-cause investigation for auto-verify loop
   guards/
-    careful.md                    # Destructive command warnings
+    careful.md                    # Destructive command interception
     freeze.md                     # Edit scope lock
-    verification.md               # No claims without evidence
+    verification.md               # Evidence-before-claims gate
   rules/
-    tdd.md                        # TDD iron law + rationalizations
-    review-protocol.md            # Two-stage review rules
-    anti-patterns.md              # Testing anti-patterns reference
+    tdd.md                        # TDD reference with rationalization prevention
+    review-protocol.md            # Two-stage review protocol
+    anti-patterns.md              # Testing anti-patterns
   extensions/
-    security-baseline.md          # OWASP-aligned security constraints (opt-in)
+    security-baseline.md          # OWASP security constraints (opt-in)
   adapters/
-    kiro/install.sh               # Symlink to .kiro/skills/
-    claude-code/install.sh        # Symlink to .claude/skills/
+    kiro/install.sh               # One-line install for Kiro projects
+    claude-code/install.sh        # One-line install for Claude Code projects
 ```
 
-## Iron Laws
+## Benchmark Results
 
-These four rules are non-negotiable. Every agent, every task, every time.
+Tested on the same TypeScript monorepo, same model (Claude Opus 4.6), same tasks:
 
-1. **No production code without a failing test first.** Write the test. Watch it fail. Then implement. Violations get deleted.
-2. **No fixes without root-cause investigation first.** Trace backward from symptom to origin. No shotgun debugging.
-3. **No completion claims without fresh verification evidence.** Run the command. Read the output. Then claim success. "Should work" is not evidence.
-4. **No shipping without all-green verification loop.** Tests, build, and lint must all pass. Failures are auto-fixed up to 3 times.
+| Dimension | AIDLC | Superpowers | Super-AIDLC |
+|-----------|-------|-------------|-------------|
+| Speed (Medium) | 10 min | -- | **6.5 min (-35%)** |
+| Speed (Heavy) | 12 min | **9 min** | 13.6 min |
+| TDD compliance | Never | Always | Always |
+| Test count (Heavy) | 35 | 46 | **48** |
+| Design documentation | Audit only | None | **Diagram + error map + decisions + alternatives** |
+| Persistent artifacts | audit.md | None | **Design doc + build log + audit-lite** |
+| Code modularity | Mixed | SRP | **SRP** |
+
+Full results: [BENCHMARK.md](BENCHMARK.md)
 
 ## Credits
 
-Super-AIDLC is built on ideas from three open-source projects:
+Built on ideas from three open-source projects:
 
-- **[AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)** -- Adaptive lifecycle, documentation-driven design, extension system, audit trail patterns.
-- **[Superpowers](https://github.com/PrimeRadiantAI/superpowers)** -- TDD enforcement, two-stage review protocol, verification gate, testing anti-patterns, systematic debugging.
-- **[gstack](https://github.com/garrytan/gstack)** -- Browser QA workflow, careful/freeze safety guards, investigate debugging, ship automation, coverage audit.
+- **[AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)** -- Adaptive lifecycle, documentation-driven design, extension system.
+- **[Superpowers](https://github.com/PrimeRadiantAI/superpowers)** -- TDD enforcement, two-stage review, verification gate, rationalization prevention.
+- **[gstack](https://github.com/garrytan/gstack)** -- Browser QA, careful/freeze safety guards, systematic debugging.
 
 ## License
 
