@@ -11,11 +11,12 @@ The user wants to: $ARGUMENTS
 
 ## Iron Laws
 
-These three rules are non-negotiable. Detail lives in the referenced files.
+These four rules are non-negotiable. Detail lives in the referenced files.
 
 1. **No production code without a failing test first** -- see `rules/tdd.md`
 2. **No fixes without root-cause investigation first** -- see `agents/debugger.md`
 3. **No completion claims without fresh verification evidence** -- see `guards/verification.md`
+4. **No shipping without all-green verification loop** -- tests, build, and lint must all pass. Failures are auto-fixed up to 3 times.
 
 ## Three Beliefs
 
@@ -25,13 +26,15 @@ These three rules are non-negotiable. Detail lives in the referenced files.
 
 ## What Makes This Different From Plan Mode
 
-If you skip any of these, you are just doing plan mode. The whole point is these 5 things:
+If you skip any of these, you are just doing plan mode. The whole point is these 7 things:
 
 1. **Ask structured questions BEFORE designing** -- not open-ended; with options and recommendations.
 2. **Create design documents BEFORE code** -- actual .md files with architecture, error maps, diagrams.
 3. **Dispatch parallel builder agents** -- independent units build simultaneously in worktrees.
 4. **Dispatch TWO reviewer agents** -- spec-reviewer then quality-reviewer, sequentially, before merge.
 5. **Create persistent artifacts** -- aidlc-docs/ that accumulate across sessions.
+6. **Auto-verification loop** -- tests/build/lint are run automatically; failures trigger the debugger agent and re-verify until all green or 3 iterations.
+7. **Cross-session learning** -- reads prior build logs to avoid repeating mistakes and follow established patterns.
 
 ## Step 1: Detect Workspace
 
@@ -45,6 +48,50 @@ Before anything else, determine workspace type:
 - Scan: `.kiro/specs/` for existing Kiro specs (if present).
 - Scan: `CLAUDE.md`, `README.md`, recent `git log --oneline -10`.
 - Reference prior decisions and conventions throughout the session.
+
+### Cross-Session Learning
+
+If `aidlc-docs/` contains prior build logs, extract and apply lessons:
+
+1. **Read the last 3 build-log.md files** (most recent first)
+2. Extract from each:
+   - "Issues Encountered" -- avoid repeating the same mistakes
+   - "Decisions Made During Build" -- follow established patterns
+   - "Alternatives Considered" -- don't re-evaluate rejected options
+3. **Build a Session Context block** and inject into every builder/reviewer prompt:
+
+```
+## Lessons from Prior Runs
+- {issue from build-log-1}: {how it was resolved}
+- Convention: {pattern established in prior run}
+- Do NOT revisit: {rejected alternative and why}
+```
+
+4. If a prior design doc exists for a SIMILAR feature, reference it:
+   "The {prior feature} used {pattern}. Follow the same pattern unless requirements differ."
+
+This is what makes Super-AIDLC smarter over time. Each run teaches the next one.
+
+### Kiro Specs Integration (if .kiro/ exists)
+
+Super-AIDLC is Kiro-native. If the project has a `.kiro/` directory:
+
+**Read existing specs BEFORE asking questions:**
+1. Scan `.kiro/specs/` for existing requirements.md, design.md, tasks.md
+2. Scan `.kiro/steering/` for product.md, structure.md, tech.md
+3. If specs already cover the requested feature:
+   - SKIP the question phase entirely
+   - Use existing specs as the design doc
+   - Go straight to construction
+   - Display: "Found existing Kiro specs for this feature. Using them as design input."
+4. If specs partially cover it:
+   - Pre-fill answers from existing specs
+   - Only ask questions about gaps
+   - Display: "Found partial Kiro specs. I'll fill in the gaps."
+
+**Write back to Kiro after construction:**
+1. Update `.kiro/specs/{feature}/tasks.md` with completion status
+2. If design changed during build, update `.kiro/specs/{feature}/design.md`
 
 ## Step 2: Assess Complexity
 

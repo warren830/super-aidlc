@@ -24,6 +24,19 @@ Always check these if they exist:
 - `docs/`, `README.md`, `CLAUDE.md` -- project documentation
 - `src/`, `lib/`, `app/` (or equivalent) -- source code for patterns and conventions
 
+### Prior Build Log Analysis
+
+If `aidlc-docs/` contains prior build logs:
+
+1. Read the last 3 `build-log.md` files (most recent first)
+2. Extract and include in your output:
+   - **Issues Encountered** -- what went wrong and how it was fixed (so builders avoid the same mistakes)
+   - **Decisions Made During Build** -- implementation patterns established outside the design doc
+   - **Alternatives Considered** -- what was rejected and why (so nobody re-evaluates dead ends)
+3. If a prior design doc covers a similar feature, note it: "See {path} for prior approach to {similar feature}"
+
+This is critical for cross-session learning. Builders who lack this context will repeat past mistakes.
+
 ### What to Look For
 
 Beyond the task-specific search, explicitly check for:

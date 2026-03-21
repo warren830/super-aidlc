@@ -6,13 +6,25 @@ A structured development skill for AI coding agents that combines adaptive lifec
 
 ## What Makes It Different
 
-Super-AIDLC merges the best of three proven systems:
+Super-AIDLC merges the best of three proven systems, plus 4 unique capabilities no other tool has:
 
 | Source | What We Take |
 |--------|-------------|
 | **[AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)** | Adaptive lifecycle, documentation-driven design, audit trail, extension system |
 | **[Superpowers](https://github.com/PrimeRadiantAI/superpowers)** | TDD iron law, sub-agent context isolation, two-stage review, rationalization prevention |
 | **[gstack](https://github.com/garrytan/gstack)** | Browser QA, safety guards (careful/freeze), investigate debugging, ship automation |
+
+### Unique to Super-AIDLC
+
+These 4 features cannot be replicated by combining the other tools:
+
+1. **True Parallel Multi-Agent Builds** -- Independent units dispatch simultaneously to isolated worktrees via Agent tool. A Heavy task with 5 units runs in 1 round, not 5. Neither AIDLC nor Superpowers can do this.
+
+2. **Cross-Session Learning** -- Reads prior build logs to extract lessons: "last time ts-jest had resolution issues, here's how we fixed it." Each run teaches the next one. No other workflow remembers across sessions.
+
+3. **Kiro Specs Deep Integration** -- Reads existing `.kiro/specs/` and `.kiro/steering/` before asking questions. If Kiro already has requirements, Super-AIDLC skips straight to building. Writes back completion status after construction.
+
+4. **Auto-Verification Loop** -- After building, runs test/build/lint automatically. Failures trigger the debugger agent, which fixes and re-verifies. Loops up to 3 times until all green. Other tools tell you to verify; Super-AIDLC verifies and fixes for you.
 
 ## Supported Platforms
 
@@ -95,11 +107,12 @@ super-aidlc/
 
 ## Iron Laws
 
-These three rules are non-negotiable. Every agent, every task, every time.
+These four rules are non-negotiable. Every agent, every task, every time.
 
 1. **No production code without a failing test first.** Write the test. Watch it fail. Then implement. Violations get deleted.
 2. **No fixes without root-cause investigation first.** Trace backward from symptom to origin. No shotgun debugging.
 3. **No completion claims without fresh verification evidence.** Run the command. Read the output. Then claim success. "Should work" is not evidence.
+4. **No shipping without all-green verification loop.** Tests, build, and lint must all pass. Failures are auto-fixed up to 3 times.
 
 ## Credits
 

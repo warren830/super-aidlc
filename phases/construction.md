@@ -91,9 +91,40 @@ Agent(
 )
 ```
 
-**Send ALL independent builder calls in a single message** -- this runs them in parallel. Do NOT build sequentially if units are independent.
+### Parallel Dispatch Protocol
+
+When the design doc marks N units as independent (Can Parallel? = Yes):
+
+1. Read ALL builder prompts in advance
+2. Send ALL N Agent() calls in a SINGLE message -- this is what makes them parallel
+3. Each builder gets: isolation: "worktree", its own unit spec, TDD rules, project context
+4. DO NOT await one builder before dispatching the next
+5. After ALL builders complete, collect results and proceed to review
+
+Example for 3 parallel units:
+
+In a SINGLE message, send these three tool calls:
+
+```
+Agent(prompt: "...", isolation: "worktree", description: "Build unit: U1")
+Agent(prompt: "...", isolation: "worktree", description: "Build unit: U2")
+Agent(prompt: "...", isolation: "worktree", description: "Build unit: U3")
+```
+
+This is NOT the same as running them sequentially. The Agent tool runs all three
+simultaneously when they appear in the same message. This is Super-AIDLC's key
+speed advantage on Heavy tasks.
 
 After all builders complete, check results. If any failed, fix and retry (max 2 attempts, then escalate to user with diagnosis).
+
+### Merge Protocol for Worktree Results
+
+After all parallel builders complete:
+1. Check each builder's report for PASS/FAIL
+2. If any FAIL: fix in the failed worktree, do NOT restart others
+3. When all PASS: merge each worktree branch to main sequentially
+4. After merge: run full test suite to catch integration issues
+5. If integration tests fail: use agents/debugger.md to investigate
 
 ### If only one unit or sequential dependencies -- build directly:
 
@@ -165,13 +196,64 @@ After all units pass both reviews, before integration:
 
 If coverage tooling is not available, note it in the build log and proceed.
 
-## Step 6: Integrate and Test
+## Step 6: Auto-Verification Loop
 
-After all units pass review and coverage audit:
-1. If using worktrees, merge all branches to main.
-2. Run the full test suite.
-3. Run linting on everything.
-4. Fix any integration issues (following TDD for new code).
+After all units pass review and coverage audit, run the verification loop:
+
+### The Loop
+
+```
+REPEAT until all green OR max 3 iterations:
+  1. Run full test suite -> if FAIL -> dispatch debugger agent -> fix -> continue
+  2. Run build/compile -> if FAIL -> read errors -> fix -> continue
+  3. Run linter -> if FAIL -> fix lint errors -> continue
+  4. All pass? -> EXIT loop (success)
+```
+
+### Implementation
+
+```
+# Iteration 1
+Run: {test command from CLAUDE.md or package.json}
+If exit code != 0:
+  Read error output
+  Dispatch debugger: Agent(prompt: "<agents/debugger.md> Fix: {error}", description: "Fix test: {error summary}")
+  After fix: go to step 1 (re-run tests)
+
+Run: {build command}
+If exit code != 0:
+  Read error output
+  Fix compilation errors directly (these are usually straightforward)
+  After fix: go to step 1 (re-run from tests)
+
+Run: {lint command}
+If exit code != 0:
+  Fix lint errors directly
+  After fix: go to step 1 (re-run from tests)
+
+All pass? -> DONE. Proceed to Step 7.
+```
+
+### Max iterations: 3
+
+If still failing after 3 iterations, STOP and escalate to user:
+```
+Verification loop failed after 3 iterations.
+
+Remaining issues:
+- {list of failing tests or errors}
+
+What I've tried:
+- Iteration 1: {what was fixed}
+- Iteration 2: {what was fixed}
+- Iteration 3: {what was fixed}
+
+I need your help to resolve this.
+```
+
+This auto-fix loop is what makes Super-AIDLC deliver WORKING code, not just code
+that was "written and reviewed." The loop continues until tests/build/lint all pass
+or the maximum iterations are reached.
 
 ## Step 7: Ship Offer
 

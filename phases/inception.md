@@ -49,6 +49,16 @@ Use the Researcher's inventory to tailor the questions in Step 2. If the Researc
 
 ## Step 2: Ask Questions
 
+### Pre-fill from Kiro Specs
+
+Before asking questions, check if `.kiro/specs/` or `.kiro/steering/` already answers them:
+- tech.md may specify database, framework, deployment target
+- product.md may specify users, scale, priorities
+- Existing requirements.md may cover scope and constraints
+
+For each question: if a Kiro file already provides the answer, use it and note:
+"(from .kiro/steering/tech.md)" -- do not re-ask the user.
+
 Before designing anything, you MUST ask the user these questions. Group them by topic, provide options with trade-offs and your recommendation, wait for answers.
 
 ### Extension Opt-In

@@ -6,13 +6,22 @@
 
 ## 有什么不同
 
-Super-AIDLC 融合了三个成熟系统的精华：
+Super-AIDLC 融合了三个成熟系统的精华，加上 4 个独有能力：
 
 | 来源 | 我们取什么 |
 |------|-----------|
 | **[AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)** | 自适应生命周期、文档驱动设计、审计追踪、扩展系统 |
 | **[Superpowers](https://github.com/PrimeRadiantAI/superpowers)** | TDD 铁律、子代理上下文隔离、两阶段审查、合理化防护 |
 | **[gstack](https://github.com/garrytan/gstack)** | 浏览器 QA、安全防护（careful/freeze）、根因调试、发布自动化 |
+
+### Super-AIDLC 独有能力
+
+这 4 个能力无法通过组合其他工具实现：
+
+1. **真正的多 Agent 并行构建** -- 独立工作单元同时 dispatch 到隔离 worktree。5 个 unit 的 Heavy 任务跑 1 轮，不是 5 轮。AIDLC 和 Superpowers 都做不到。
+2. **跨会话学习** -- 读取之前的 build-log 提取教训："上次 ts-jest 有解析问题，这样修复的。"每次运行让下次更聪明。其他工具不会跨会话记忆。
+3. **Kiro Specs 深度集成** -- 读取已有的 `.kiro/specs/` 和 `.kiro/steering/`，如果 Kiro 已有需求文档，直接跳过问题阶段开始构建。构建完成后回写完成状态。
+4. **自动验证修复循环** -- 构建后自动跑测试/编译/lint。失败则触发 debugger agent 修复并重新验证，最多循环 3 次直到全绿。其他工具只告诉你要验证，Super-AIDLC 替你验证并修复。
 
 ## 支持平台
 
@@ -93,13 +102,14 @@ super-aidlc/
     claude-code/install.sh        # 符号链接到 .claude/skills/
 ```
 
-## 三条铁律
+## 四条铁律
 
 不可妥协。每个代理、每个任务、每一次。
 
 1. **没有失败测试就没有生产代码。** 先写测试，看它失败，再实现。违反就删除代码重来。
 2. **没有根因调查就没有修复。** 从症状追溯到根源。不做散弹式调试。
 3. **没有新鲜验证证据就没有完成声明。** 运行命令，阅读输出，然后声称成功。"应该能行"不是证据。
+4. **没有全绿验证循环就没有发布。** 测试、编译、lint 必须全部通过。失败自动修复最多 3 次。
 
 ## 致谢
 
