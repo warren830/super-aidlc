@@ -298,13 +298,11 @@ Append to `aidlc-docs/{date}-{feature-slug}/build-log.md`:
 - Ship approved: {timestamp or "pending"}
 
 ## Alternatives Considered
-{For each key design decision, what was rejected and why.}
+See design doc for architecture/storage alternatives. Add any NEW alternatives discovered during build:
 
 | Option | Verdict | Reason |
 |--------|---------|--------|
-| {Option A} | Rejected | {why} |
-| {Option B} | Rejected | {why} |
-| {Option C} | **Selected** | {why} |
+| {Option discovered during build} | Rejected/Selected | {why} |
 
 ## Decisions Made During Build
 {Any implementation decisions not in the design doc.

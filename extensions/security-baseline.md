@@ -6,7 +6,7 @@ The four-way benchmark proved that NO methodology automatically produces secure 
 
 ## Code Generation Constraints
 
-Every builder agent MUST enforce these when the security baseline is active:
+Every builder agent MUST enforce these (security baseline is default-on):
 
 ### Input Validation
 - Validate ALL user input at entry points (API params, form data, URL params, headers)
@@ -47,7 +47,7 @@ Every builder agent MUST enforce these when the security baseline is active:
 
 ## Review Constraints
 
-When the security baseline is active, the quality reviewer (`agents/quality-reviewer.md`) adds these rules:
+The quality reviewer (`agents/quality-reviewer.md`) enforces these rules (default-on):
 
 - ALL items in Pass 1 Security checklist MUST pass for a PASS verdict
 - Any security finding in Pass 1 is an automatic FAIL -- no exceptions
@@ -55,7 +55,7 @@ When the security baseline is active, the quality reviewer (`agents/quality-revi
 
 ## Threat Model (Heavy complexity only)
 
-For Heavy complexity projects with the security baseline enabled, the design doc MUST include a simplified threat model section:
+For Heavy complexity projects, the design doc MUST include a simplified threat model section:
 
 ```markdown
 ## Threat Model

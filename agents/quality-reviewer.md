@@ -86,7 +86,7 @@ This review ONLY runs after spec compliance review passes. If spec review has no
   - Mocking without understanding what the dependency does
 
 ### File Size
-- New files over 300 lines: flag for possible decomposition.
+- New files over 200 lines: FAIL. Must split. (Consistent with builder's SRP rule.)
 - Existing files that grew by more than 100 lines: flag for review.
 
 ## Output Format
