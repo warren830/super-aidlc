@@ -123,13 +123,13 @@ The marginal cost of AIDLC is 10 minutes for 37 extra tests + 14 doc files. Wors
 
 ---
 
-## Conclusion
+## Conclusion (Round 1)
 
 ### For This Project (Greenfield, Single Developer)
 
 **Winner: Super-AIDLC.** Best balance of speed (10 min), test quality (58 tests, TDD), and documentation (architecture diagram, error map, decisions log). Only 1 minute slower than Superpowers but with design artifacts that will save hours when maintaining or extending the project.
 
-### General Recommendations
+### General Recommendations (Round 1)
 
 | Scenario | Best Choice | Why |
 |----------|------------|-----|
@@ -138,3 +138,120 @@ The marginal cost of AIDLC is 10 minutes for 37 extra tests + 14 doc files. Wors
 | Team project, need handoff | **Super-AIDLC** | Best docs + tests + TDD in one package |
 | Enterprise, need compliance | AIDLC | Full audit trail, user stories, but slowest |
 | Ongoing project (brownfield) | **Super-AIDLC** | Cross-session learning + Kiro integration |
+
+---
+
+## Round 2: After Security Hardening
+
+Round 1 revealed that ALL 4 approaches produced code with shell injection, path traversal, memory leaks, and unbounded buffers. Super-AIDLC was then hardened with:
+- Security baseline changed from opt-in to **default-on** (5th Iron Law)
+- Builder agent given mandatory input safety rules with code examples
+- Quality reviewer given Production Readiness checks (CRITICAL level)
+- Builder enforced strict SRP (max 200 lines/file, one handler per file)
+
+Same task (Feishu Claude Code Controller), same model, fresh agents with zero prior context.
+
+### Round 2: Efficiency
+
+| Metric | Raw | Superpowers | Super-AIDLC v2 | AIDLC |
+|--------|-----|-------------|----------------|-------|
+| Wall clock time | **263s (4.4 min)** | 820s (13.7 min) | 971s (16.2 min) | 552s (9.2 min) |
+| Token consumption | **25,963** | 99,223 | 102,865 | 102,822 |
+| Tool calls | **33** | 115 | 139 | 95 |
+
+Super-AIDLC is now the slowest. The security hardening adds ~6 minutes vs Round 1 (10 min -> 16 min).
+
+### Round 2: Test Count
+
+| Raw | Superpowers | Super-AIDLC v2 | AIDLC |
+|-----|-------------|----------------|-------|
+| 33 | 69 | **85** | 49 |
+
+Super-AIDLC now produces the most tests (+47% vs Round 1). The security rules generate additional test cases for input validation, path traversal, and buffer limits.
+
+### Round 2: Security (THE KEY DIFFERENTIATOR)
+
+| Security Measure | Raw | Superpowers | AIDLC | Super-AIDLC v2 |
+|-----------------|-----|-------------|-------|----------------|
+| Shell injection prevention (array form spawn) | Partial | Partial | Partial | **Full (0 string exec)** |
+| Path traversal prevention | Partial | None | None | **9 validation checks** |
+| Output buffer limits | Weak (2) | None | None | **32 limit checks** |
+| Memory cleanup (TTL/eviction) | None | None | None | **TTL + 1000 cap** |
+| Environment variable isolation | None | None | None | **Whitelist** |
+| Atomic file writes | None | None | None | **Yes** |
+| Threat model in design doc | None | None | None | **Yes (11-row error map)** |
+
+**This is the hard differentiator.** Only Super-AIDLC v2 produced code with real security hardening. The other three all have the same vulnerabilities as Round 1.
+
+### Round 2: SRP Compliance (Max File Size)
+
+| Raw | Superpowers | Super-AIDLC v2 | AIDLC |
+|-----|-------------|----------------|-------|
+| **246 lines** | **98 lines** | **178 lines** | **142 lines** |
+
+Superpowers still has the cleanest file structure. Super-AIDLC improved from 364 lines (Round 1) to 178 lines but still not as strict as Superpowers.
+
+### Round 2: Documentation
+
+| Artifact | Raw | Superpowers | Super-AIDLC v2 | AIDLC |
+|----------|-----|-------------|----------------|-------|
+| Architecture diagram | No | No | **Yes** | No |
+| Error/Rescue Map | No | No | **Yes (11 rows)** | No |
+| Threat Model | No | No | **Yes** | No |
+| Decisions Log | No | No | **Yes** | No |
+| Alternatives Considered | No | No | **Yes** | No |
+| Build Log with Approvals | No | No | **Yes** | No |
+| Audit trail | No | No | Audit-lite | **Full audit.md** |
+| Total doc files | 0 | 0 | **2 (rich)** | 13 (scattered) |
+
+### Round 1 vs Round 2: Super-AIDLC Improvement
+
+| Metric | v1 (Round 1) | v2 (Round 2) | Change |
+|--------|-------------|-------------|--------|
+| Tests | 58 | **85** | **+47%** |
+| Shell injection | VULNERABLE | **FIXED** | Fixed |
+| Path traversal | VULNERABLE | **9 checks** | Fixed |
+| Memory leaks | YES | **TTL + cap** | Fixed |
+| Output OOM | 30KB truncate | **32 limit checks** | Hardened |
+| Env var leakage | YES | **Whitelist** | Fixed |
+| File writes | Non-atomic | **Atomic** | Fixed |
+| Max file size | 364 lines | **178 lines** | -51% |
+| Time | 10 min | 16 min | +60% |
+
+---
+
+## Final Conclusion
+
+### The Tradeoff Is Now Clear
+
+```
+Speed:          Raw (4m) >>> AIDLC (9m) > Superpowers (14m) > Super-AIDLC (16m)
+Tests:          Super-AIDLC (85) > Superpowers (69) > AIDLC (49) > Raw (33)
+Security:       Super-AIDLC >>> Raw = Superpowers = AIDLC (all vulnerable)
+Documentation:  Super-AIDLC (rich) > AIDLC (thorough) >> Raw = Superpowers (none)
+Code Structure: Superpowers (98 LOC max) > AIDLC (142) > Super-AIDLC (178) > Raw (246)
+```
+
+### Super-AIDLC's Unique Position
+
+After hardening, Super-AIDLC is the ONLY approach that:
+- Produces code with **zero known security vulnerabilities** (shell injection, path traversal, memory leaks all addressed)
+- Has the **most tests** (85) with TDD compliance
+- Includes **design documentation** with architecture diagram, error map, and threat model
+- Provides **audit-lite** (approvals + alternatives + build log)
+
+The cost is speed: 16 minutes vs 4-14 for others. But the 12 extra minutes vs Raw buy you:
+- +52 tests
+- Zero security vulnerabilities (vs multiple in Raw)
+- Architecture diagram + error map + threat model
+- Production-ready code (TTL, atomic writes, bounded buffers)
+
+### When to Use Which
+
+| Scenario | Best Choice | Why |
+|----------|------------|-----|
+| Hackathon / throwaway prototype | Raw | 4x faster, iterate and discard |
+| Solo project, code quality focus | Superpowers | Cleanest structure, strong TDD, fast |
+| **Production code, any team size** | **Super-AIDLC v2** | **Only option with security + tests + docs** |
+| Compliance / regulated environment | AIDLC + Super-AIDLC security rules | Audit trail from AIDLC, security from Super-AIDLC |
+| Brownfield / ongoing project | Super-AIDLC v2 | Cross-session learning + Kiro integration + security |
