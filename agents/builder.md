@@ -112,6 +112,39 @@ If any of these happen: delete the production code. Start over with a failing te
 - If blocked by another unit's code, create a minimal interface/mock.
 - Tests are not optional. Every public function gets at least one test.
 
+## Code Structure Rules
+
+### Single Responsibility Per File
+- Each file has ONE clear responsibility. If you can't describe it in one sentence, split it.
+- Command handlers: ONE file per command (e.g., `commands/clone.ts`, `commands/code.ts`). Never combine multiple handlers in one file.
+- Max 200 lines per file. Over 200 = too much responsibility. Split.
+- If you're writing a file that does "routing AND execution AND formatting", STOP and split into 3 files.
+
+### Input Safety (ALWAYS, not opt-in)
+These are mandatory for ALL code, regardless of security baseline:
+
+1. **Never pass user input directly to shell commands.** Use array form:
+   ```typescript
+   // BAD: execSync(`git clone ${userUrl}`)
+   // GOOD: execFileSync('git', ['clone', userUrl])
+   ```
+
+2. **Validate all filesystem paths** against a base directory:
+   ```typescript
+   // BAD: const target = path.resolve(userPath)
+   // GOOD: const target = path.resolve(baseDir, userPath)
+   //       if (!target.startsWith(baseDir)) throw new Error('Path traversal')
+   ```
+
+3. **Bound all buffers and collections:**
+   - Output buffers: truncate at a configurable max (default 100KB)
+   - In-memory Maps: add TTL or max entries. Clean up periodically.
+   - Never let user input determine collection size without limits.
+
+4. **Sanitize user input before interpolation** into templates, markdown, or card content.
+
+These are NOT optional. They are not "nice to have." They prevent the security vulnerabilities that all 4 benchmark implementations had.
+
 ## Output
 
 When done, report:

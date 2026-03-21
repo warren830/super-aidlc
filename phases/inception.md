@@ -61,17 +61,17 @@ For each question: if a Kiro file already provides the answer, use it and note:
 
 Before designing anything, you MUST ask the user these questions. Group them by topic, provide options with trade-offs and your recommendation, wait for answers.
 
-### Extension Opt-In
+### Security Baseline (DEFAULT ON)
 
-At the start of the question session, ask:
+The security baseline is enabled by default. Read `extensions/security-baseline.md` and incorporate its constraints into the design doc and review criteria.
 
+Display to user:
 ```
-Before we dive in -- do you want to enable the security baseline?
-This adds input validation, auth checks, and OWASP constraints to the design.
-Enable security baseline? (y/n)
+Security baseline: ENABLED (input validation, shell safety, path traversal prevention, auth checks)
+To disable: say "skip security baseline"
 ```
 
-If yes, read `extensions/security-baseline.md` and incorporate its constraints into the design doc and review criteria.
+Only skip if the user explicitly requests it. If skipped, note the reason in the design doc's Approvals section.
 
 ### For Medium Complexity -- Checklist-Level Questions (3-5 groups)
 

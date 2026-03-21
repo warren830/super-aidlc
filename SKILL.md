@@ -11,12 +11,13 @@ The user wants to: $ARGUMENTS
 
 ## Iron Laws
 
-These four rules are non-negotiable. Detail lives in the referenced files.
+These five rules are non-negotiable. Detail lives in the referenced files.
 
 1. **No production code without a failing test first** -- see `rules/tdd.md`
 2. **No fixes without root-cause investigation first** -- see `agents/debugger.md`
 3. **No completion claims without fresh verification evidence** -- see `guards/verification.md`
 4. **No shipping without all-green verification loop** -- tests, build, and lint must all pass. Failures are auto-fixed up to 3 times.
+5. **No user input passed unsanitized to shell, filesystem, or templates** -- see `extensions/security-baseline.md`. Default on. Shell injection, path traversal, and unbounded buffers are caught by the quality reviewer.
 
 ## Three Beliefs
 

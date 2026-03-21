@@ -1,6 +1,8 @@
-# Security Baseline Extension
+# Security Baseline
 
-Opt-in at Inception phase. When enabled, these constraints apply to code generation and review for the entire session.
+DEFAULT ON. These constraints apply to ALL code generation and review unless the user explicitly says "skip security baseline."
+
+The four-way benchmark proved that NO methodology automatically produces secure code. Shell injection, path traversal, and memory leaks appeared in ALL implementations. This baseline exists to fix that.
 
 ## Code Generation Constraints
 

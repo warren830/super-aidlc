@@ -114,12 +114,13 @@ Verify:     Test → Build → Lint → (fail? → debugger → fix → retry) �
 Ship:       Commit → Push → PR (with design doc + test results)
 ```
 
-## Four Iron Laws
+## Five Iron Laws
 
 1. **No production code without a failing test first.** Violations get deleted.
 2. **No fixes without root-cause investigation.** No shotgun debugging.
 3. **No completion claims without verification evidence.** "Should work" is not evidence.
 4. **No shipping without all-green verification loop.** Auto-fix up to 3 times.
+5. **No user input passed unsanitized to shell, filesystem, or templates.** Security baseline is default-on.
 
 ## File Structure
 

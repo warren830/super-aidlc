@@ -29,6 +29,12 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 - [ ] File uploads validated (type, size, content)
 - [ ] Rate limiting on public endpoints (if applicable)
 
+### Input Safety (CRITICAL -- check these for EVERY review)
+- [ ] No user input passed directly to shell commands (must use array form: execFile, not exec with string interpolation)
+- [ ] All filesystem paths validated against a base directory (path traversal prevention)
+- [ ] All output buffers have size limits (no unbounded memory growth)
+- [ ] User input sanitized before interpolation into templates/markdown/HTML
+
 ### Correctness
 - [ ] Logic matches the design doc
 - [ ] Error cases from the Error/Rescue Map are implemented
@@ -36,6 +42,14 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 - [ ] No data loss scenarios (failed writes, partial updates, orphaned records)
 - [ ] Tests actually test the right behavior (not just "test passes")
 - [ ] No broken invariants (e.g., "exactly one primary" cannot become zero or two)
+
+### Production Readiness
+- [ ] In-memory Maps/Sets have cleanup (TTL, max size, or periodic eviction)
+- [ ] Long-running processes have timeouts (configurable, not hardcoded)
+- [ ] File writes are atomic (write to temp, then rename) for persistent state
+- [ ] Concurrent access to shared state is protected (mutex, queue, or documented as safe)
+- [ ] Child processes are cleaned up on shutdown (kill + await exit)
+- [ ] No environment variable leakage to child processes (whitelist, not inherit all)
 
 ### Data
 - [ ] No unvalidated data crosses trust boundaries
@@ -54,11 +68,12 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 
 ## Additional Checks
 
-### Single Responsibility
-- Does each file have one clear responsibility with a well-defined interface?
+### Single Responsibility (STRICT)
+- Does each file have ONE clear responsibility? Can you describe it in one sentence?
+- **Max 200 lines per new file.** Over 200 = FAIL. Must split.
+- **One handler per file.** Command handlers, route handlers, event handlers -- never combined.
 - Are units decomposed so they can be understood and tested independently?
 - Did this change create new files that are already large, or significantly grow existing files?
-  (Do not flag pre-existing file sizes -- focus on what this change contributed.)
 
 ### TDD Verification
 - Are there tests for every new public function?
