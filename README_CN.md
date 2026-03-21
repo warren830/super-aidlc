@@ -4,7 +4,7 @@
 
 Super-AIDLC 是一个面向 AI 编码代理的结构化开发技能。它评估任务复杂度、先设计再编码、在并行 worktree 中用 TDD 构建、两阶段审查、自动验证直到全绿。
 
-> [English version / 英文版](README.md) | [基准测试](BENCHMARK.md)
+> [English version / 英文版](README.md) | [Brownfield 基准测试](docs/benchmark-brownfield.md) | [Greenfield 基准测试](docs/benchmark-greenfield.md) | [Blog](docs/blog.md)
 
 ## 为什么不直接用 AIDLC / Superpowers / gstack？
 
@@ -168,7 +168,7 @@ super-aidlc/
 | 持久化产物 | audit.md | 无 | **设计文档 + 构建日志 + 审计精简版** |
 | 代码模块化 | 混合 | SRP | **SRP** |
 
-完整结果：[BENCHMARK.md](BENCHMARK.md)
+完整结果：[Brownfield 基准测试](docs/benchmark-brownfield.md) | [Greenfield 基准测试](docs/benchmark-greenfield.md)
 
 ## 致谢
 

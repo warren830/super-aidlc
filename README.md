@@ -4,7 +4,7 @@
 
 Super-AIDLC is a structured development skill for AI coding agents. It assesses task complexity, designs before coding, builds with TDD in parallel worktrees, reviews in two stages, and auto-verifies until all green.
 
-> [Chinese version / 中文版](README_CN.md) | [Benchmark](BENCHMARK.md)
+> [Chinese version / 中文版](README_CN.md) | [Brownfield Benchmark](docs/benchmark-brownfield.md) | [Greenfield Benchmark](docs/benchmark-greenfield.md) | [Blog](docs/blog.md)
 
 ## Why Not Just Use AIDLC / Superpowers / gstack?
 
@@ -168,7 +168,7 @@ Tested on the same TypeScript monorepo, same model (Claude Opus 4.6), same tasks
 | Persistent artifacts | audit.md | None | **Design doc + build log + audit-lite** |
 | Code modularity | Mixed | SRP | **SRP** |
 
-Full results: [BENCHMARK.md](BENCHMARK.md)
+Full results: [Brownfield Benchmark](docs/benchmark-brownfield.md) | [Greenfield Benchmark](docs/benchmark-greenfield.md)
 
 ## Credits
 
