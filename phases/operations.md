@@ -4,15 +4,25 @@
 
 This phase handles QA, shipping, and documentation updates. It runs after construction completes.
 
-## Section 1: Browser QA (optional, for UI projects)
+## Section 1: QA Testing (optional)
+
+The QA agent (`agents/qa.md`) supports three modes:
+
+| Project Type | QA Mode | Prerequisite |
+|-------------|---------|-------------|
+| Web app | Browser | Playwright installed, app running |
+| API-only | API | Server running, endpoints documented |
+| CLI tool | CLI | Binary built, commands documented |
+| Library / SDK | Skip | Covered by unit test suite |
 
 ### Prerequisites
 
-- Playwright installed (`npx playwright install`)
-- Application running at an accessible URL
-- Design doc available with user flows and expected behaviors
+- **Browser mode**: Playwright installed (`npx playwright install`), application running at accessible URL
+- **API mode**: Server running, API endpoints and expected shapes in design doc
+- **CLI mode**: CLI binary available, commands and expected output in design doc
+- All modes: design doc available with user flows / API contracts / CLI commands
 
-If Playwright is not available or the project has no UI, skip this section entirely. Note the skip in the build log and proceed to Section 2.
+If the project is a library with no UI/API/CLI, skip this section entirely. Note the skip in the build log and proceed to Section 2.
 
 For complex QA scenarios, dispatch a dedicated QA agent using `agents/qa.md`.
 

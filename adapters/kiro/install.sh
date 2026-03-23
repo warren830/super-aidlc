@@ -22,6 +22,19 @@ if [ ! -d "$PROJECT_ROOT" ]; then
   exit 1
 fi
 
+# Read version
+VERSION="unknown"
+if [ -f "$SCRIPT_DIR/VERSION" ]; then
+  VERSION=$(cat "$SCRIPT_DIR/VERSION" | tr -d '[:space:]')
+fi
+
+# Check for existing installation
+if [ -L "$SKILL_DIR/SKILL.md" ]; then
+  echo "Updating existing super-aidlc installation (v$VERSION)"
+else
+  echo "Installing super-aidlc v$VERSION"
+fi
+
 # Create target directory
 mkdir -p "$SKILL_DIR"
 
@@ -33,5 +46,6 @@ ln -sf "$SCRIPT_DIR/guards" "$SKILL_DIR/guards"
 ln -sf "$SCRIPT_DIR/rules" "$SKILL_DIR/rules"
 ln -sf "$SCRIPT_DIR/extensions" "$SKILL_DIR/extensions"
 
-echo "Installed super-aidlc to $SKILL_DIR"
+echo "Installed super-aidlc v$VERSION to $SKILL_DIR"
 echo "Symlinks point to $SCRIPT_DIR"
+echo "Run 'git pull' in $SCRIPT_DIR to update all projects."

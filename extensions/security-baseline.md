@@ -6,7 +6,7 @@ The four-way benchmark proved that NO methodology automatically produces secure 
 
 ## Code Generation Constraints
 
-Every builder agent MUST enforce these (security baseline is default-on):
+Every builder agent MUST enforce these (security baseline is default-on). Examples are shown for multiple languages -- use the one matching your project.
 
 ### Input Validation
 - Validate ALL user input at entry points (API params, form data, URL params, headers)
@@ -18,6 +18,39 @@ Every builder agent MUST enforce these (security baseline is default-on):
 - Use parameterized queries for ALL database operations
 - Never concatenate user input into SQL, NoSQL, or OS commands
 - This is non-negotiable -- no exceptions, no "just this once"
+
+**Multi-language examples:**
+
+```typescript
+// TypeScript -- BAD vs GOOD
+// BAD:  db.query(`SELECT * FROM users WHERE id = '${userId}'`)
+// GOOD: db.query('SELECT * FROM users WHERE id = $1', [userId])
+```
+
+```python
+# Python -- BAD vs GOOD
+# BAD:  cursor.execute(f"SELECT * FROM users WHERE id = '{user_id}'")
+# GOOD: cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+```
+
+```go
+// Go -- BAD vs GOOD
+// BAD:  db.Query("SELECT * FROM users WHERE id = '" + userID + "'")
+// GOOD: db.Query("SELECT * FROM users WHERE id = $1", userID)
+```
+
+```java
+// Java -- BAD vs GOOD
+// BAD:  stmt.executeQuery("SELECT * FROM users WHERE id = '" + userId + "'")
+// GOOD: PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?");
+//       ps.setString(1, userId);
+```
+
+```rust
+// Rust (sqlx) -- BAD vs GOOD
+// BAD:  sqlx::query(&format!("SELECT * FROM users WHERE id = '{}'", user_id))
+// GOOD: sqlx::query("SELECT * FROM users WHERE id = $1").bind(&user_id)
+```
 
 ### No Hardcoded Secrets
 - No passwords, API keys, tokens, or connection strings in source code

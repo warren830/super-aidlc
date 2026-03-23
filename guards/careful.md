@@ -54,7 +54,7 @@ Type "y" to proceed, anything else to cancel.
 
 ## Rules
 
-1. Do NOT execute the command until the user responds with "y". Any other response (including "yes", "sure", "ok") means cancel. Only the literal "y" proceeds.
+1. Do NOT execute the command until the user responds with "y" or "yes" (case-insensitive). Any other response (including "sure", "ok", "go ahead") means cancel.
 2. If the command affects multiple resources (e.g., `kubectl delete namespace`), list what will be affected.
 3. If you are unsure whether a command is destructive, err on the side of warning.
 4. This guard applies to commands you execute directly AND commands you suggest the user run.

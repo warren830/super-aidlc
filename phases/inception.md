@@ -22,7 +22,17 @@ Or is {original description} exactly what you need?
 
 Wait for the user to confirm or reframe. This prevents building the wrong thing at scale.
 
-Skip this step for Medium complexity -- the scope is small enough that reframing adds overhead without proportional benefit.
+### Medium Complexity: Assumption Statement (lightweight alternative)
+
+For Medium tasks, skip the full reframing dialogue. Instead, state your assumptions upfront so the user can correct misunderstandings without a round-trip:
+
+```
+My understanding: {1-sentence summary of what the user wants}
+Scope: {what is included} | Out of scope: {what is excluded}
+If this is wrong, let me know. Otherwise I'll proceed.
+```
+
+Do NOT wait for confirmation -- proceed to Step 1 immediately. The user will interrupt if the assumption is wrong. This saves a round-trip while still surfacing misunderstandings early.
 
 ## Step 1: Reverse Engineering (brownfield only)
 
@@ -215,16 +225,36 @@ Example:
 
 ## Error/Rescue Map
 
-| What Can Fail | Error Name | What System Does | What User Sees |
-|---------------|-----------|-----------------|----------------|
-| DB connection lost | DatabaseUnavailable | Retry 3x with backoff, then fail | "Service temporarily unavailable" |
-| Invalid user input | ValidationError | Return 400 with field errors | "Please fix: {field} {reason}" |
-| Auth token expired | TokenExpired | Return 401, client refreshes | Auto-redirect to login |
-| External API timeout | UpstreamTimeout | Return cached data or degrade | "Some data may be stale" |
-| File upload too large | PayloadTooLarge | Reject before processing | "File must be under {limit}" |
+| What Can Fail | Error Name | Owner Unit | What System Does | What User Sees |
+|---------------|-----------|------------|-----------------|----------------|
+| DB connection lost | DatabaseUnavailable | U1: Data Layer | Retry 3x with backoff, then fail | "Service temporarily unavailable" |
+| Invalid user input | ValidationError | U3: API Routes | Return 400 with field errors | "Please fix: {field} {reason}" |
+| Auth token expired | TokenExpired | U2: Auth | Return 401, client refreshes | Auto-redirect to login |
+| External API timeout | UpstreamTimeout | U4: Integration | Return cached data or degrade | "Some data may be stale" |
+| File upload too large | PayloadTooLarge | U3: API Routes | Reject before processing | "File must be under {limit}" |
 
 At least 5 rows. Every external call, every user input, every async operation gets a row.
-Rules: No silent failures. Every error has a name, a rescue action, and a user-visible message.
+
+Rules:
+- No silent failures. Every error has a name, a rescue action, and a user-visible message.
+- **Every row has an Owner Unit.** This tells parallel builders exactly which errors are their responsibility. When builders receive the Error/Rescue Map, they only need to implement rows where they are the Owner.
+- If an error spans multiple units (e.g., a retry that starts at the API layer and reaches the data layer), assign ownership to the unit that INITIATES the rescue action.
+
+## Interface Contracts
+
+When multiple units will be built in parallel, define the interfaces between them explicitly. This prevents Provider and Consumer from disagreeing on data shapes after merge.
+
+| Provider Unit | Consumer Unit | Interface | Contract (signature + shape) |
+|--------------|--------------|-----------|------------------------------|
+| {U1} | {U3} | {function/API/event name} | {exact signature and return shape} |
+
+Rules:
+- Every cross-unit dependency MUST have a row here.
+- Include field names and types, not just "returns User object."
+- Both the Provider builder and Consumer builder receive these contracts in their prompts.
+- After merge, a contract verification step confirms both sides match (see construction.md Step 3b).
+
+If all units are fully independent (no cross-unit calls), write "None -- all units are independent" and skip this section.
 
 ## Units of Work
 
@@ -233,6 +263,16 @@ Rules: No silent failures. Every error has a name, a rescue action, and a user-v
 | {name} | {what it does} | {which units must finish first} | {yes/no} |
 
 Mark which units can run in parallel. This drives the build phase.
+
+### Shared Utilities (optional)
+
+If multiple units will need the same helper (e.g., path validation, error formatting, config parsing), list them here. These should be built first (as Unit 0, sequential) before parallel units start, to avoid duplication.
+
+| Utility | Used By | Location |
+|---------|---------|----------|
+| {e.g., validatePath()} | U1, U3 | {e.g., src/utils/path.ts} |
+
+If no shared utilities are anticipated, skip this section. Post-merge deduplication (construction.md) will catch any that emerge.
 
 ## Decisions Log
 
@@ -253,9 +293,10 @@ For each key decision above, record what was rejected:
 **MANDATORY outputs** -- the design doc MUST include ALL of these:
 1. ASCII architecture diagram
 2. Error/Rescue Map (5+ rows)
-3. Units of Work table with parallelism markings
-4. Decisions Log
-5. Alternatives Considered (at least for architecture and storage decisions)
+3. Interface Contracts (if units have cross-unit dependencies)
+4. Units of Work table with parallelism markings
+5. Decisions Log
+6. Alternatives Considered (at least for architecture and storage decisions)
 
 If you skip any of these, you are doing plan mode, not super-aidlc.
 
@@ -285,26 +326,45 @@ If a `.kiro/` directory exists in the project, also write Kiro-native specs:
 
 The full design doc still goes to `aidlc-docs/` as the system of record.
 
-## Step 4: Design Review Loop (self-review, max 3 iterations)
+## Step 4: Design Review
 
-After producing the design doc, self-review it against these three criteria:
+After producing the design doc, it MUST be reviewed before presenting to the user.
 
-### Check 1: Error Path Coverage
-- Does every external call have a row in the Error/Rescue Map?
-- Does every user input have validation and error handling?
-- Are there async operations without failure handling?
+### Heavy Complexity: Independent Design Review
 
-### Check 2: Unit Independence
-- Can each unit be built and tested without the others?
-- Are there hidden coupling points (shared state, implicit ordering)?
-- Would a failure in one unit's build block other units?
+For Heavy tasks, dispatch an independent **Design Reviewer Agent** (`agents/design-reviewer.md`). This is NOT self-review -- it is a separate agent with a fresh perspective, just like the two-stage code review uses separate agents.
 
-### Check 3: Over-Engineering for v1
-- Is anything designed for scale the project does not need yet?
-- Are there abstractions that only have one implementation?
-- Could any component be simpler without losing required functionality?
+```
+Agent(
+  prompt: "<agents/design-reviewer.md content>
 
-If issues are found: fix the design doc, re-check. Maximum 3 rounds. After 3 rounds, present the design as-is with notes on any remaining concerns.
+  --- Input ---
+  Design document: <full design doc content>
+  User requirements: <answers from Step 2>
+  Complexity: Heavy
+  Security baseline: <enabled / disabled>
+
+  Review this design for error path coverage, unit independence, and over-engineering.",
+  description: "Design review: {feature name}"
+)
+```
+
+If verdict is NEEDS REVISION:
+1. Apply the suggested changes to the design doc
+2. Re-dispatch the Design Reviewer (max 2 rounds total)
+3. If still NEEDS REVISION after 2 rounds: present the design to the user with the reviewer's remaining concerns noted
+
+If verdict is PASS: proceed to Step 5.
+
+### Medium Complexity: Self-Review (Lightweight)
+
+For Medium tasks, self-review against these three criteria (no separate agent dispatch needed -- Medium scope is small enough for self-review):
+
+1. **Error Path Coverage** -- Does every external call have a row in the Error/Rescue Map?
+2. **Unit Independence** -- Can each unit be built and tested without the others?
+3. **Over-Engineering** -- Is anything designed for scale the project does not need yet?
+
+If issues are found: fix the design doc and re-check once. Then proceed.
 
 ## Step 5: Present Design for Approval
 
@@ -314,20 +374,33 @@ Show the user:
 3. The unit breakdown (what will be built, in what order, what is parallel)
 4. Key design decisions
 
-### Scope Challenge (Heavy with 4+ units only)
+### Scope Challenge and Delivery Strategy (Heavy with 4+ units only)
 
 Before asking for final approval, if the design has 4 or more units and complexity is Heavy, ask:
 
 ```
-This design has {N} units. Before we commit to building all of them:
+This design has {N} units. Before we commit:
 
-If you could only ship ONE unit from this design, which would deliver
-the most value to users?
+1. If you could only ship ONE unit, which delivers the most value?
 
-This helps me prioritize the build order so you get value fastest.
+2. Build strategy:
+   (A) Build ALL units in this session -- ship everything at once
+   (B) Build in BATCHES -- ship highest-value first, iterate based on feedback
+       Suggested batches:
+       - Batch 1: {highest-value units, independent} -- ship and get feedback
+       - Batch 2: {remaining units} -- build after Batch 1 feedback
+   -> I recommend {A or B} because {reason}
 ```
 
-Wait for the answer. Reorder the units table so the highest-value unit builds first. Note the priority in the Decisions Log.
+Wait for the answer.
+
+**If (A)**: Reorder the units table so the highest-value unit builds first. Note in Decisions Log.
+
+**If (B)**:
+1. Record batch assignments in the Units of Work table (add a "Batch" column).
+2. Proceed to construction with Batch 1 only.
+3. After Batch 1 ships, the next `/super-aidlc` invocation can read the existing design doc and continue with Batch 2. The cross-session learning mechanism will carry forward decisions and patterns.
+4. Note in the design doc: "Batch delivery: Batch 1 = {units}, Batch 2 = {units}. Batch 2 may be adjusted based on Batch 1 feedback."
 
 ### Approval Gate
 

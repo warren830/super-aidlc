@@ -124,16 +124,47 @@ If any of these happen: delete the production code. Start over with a failing te
 These are mandatory for ALL code, regardless of security baseline:
 
 1. **Never pass user input directly to shell commands.** Use array form:
+
    ```typescript
-   // BAD: execSync(`git clone ${userUrl}`)
-   // GOOD: execFileSync('git', ['clone', userUrl])
+   // TypeScript -- BAD: execSync(`git clone ${userUrl}`)
+   // TypeScript -- GOOD: execFileSync('git', ['clone', userUrl])
+   ```
+   ```python
+   # Python -- BAD: os.system(f"git clone {user_url}")
+   # Python -- GOOD: subprocess.run(['git', 'clone', user_url], check=True)
+   ```
+   ```go
+   // Go -- BAD: exec.Command("sh", "-c", "git clone " + userURL)
+   // Go -- GOOD: exec.Command("git", "clone", userURL)
+   ```
+   ```java
+   // Java -- BAD: Runtime.getRuntime().exec("git clone " + userUrl)
+   // Java -- GOOD: new ProcessBuilder("git", "clone", userUrl).start()
+   ```
+   ```rust
+   // Rust -- BAD: Command::new("sh").arg("-c").arg(format!("git clone {}", user_url))
+   // Rust -- GOOD: Command::new("git").args(["clone", &user_url])
    ```
 
 2. **Validate all filesystem paths** against a base directory:
+
    ```typescript
-   // BAD: const target = path.resolve(userPath)
-   // GOOD: const target = path.resolve(baseDir, userPath)
-   //       if (!target.startsWith(baseDir)) throw new Error('Path traversal')
+   // TypeScript
+   const target = path.resolve(baseDir, userPath)
+   if (!target.startsWith(baseDir)) throw new Error('Path traversal')
+   ```
+   ```python
+   # Python
+   target = os.path.realpath(os.path.join(base_dir, user_path))
+   if not target.startswith(os.path.realpath(base_dir)):
+       raise ValueError("Path traversal")
+   ```
+   ```go
+   // Go
+   target := filepath.Join(baseDir, userPath)
+   if !strings.HasPrefix(filepath.Clean(target), filepath.Clean(baseDir)) {
+       return fmt.Errorf("path traversal")
+   }
    ```
 
 3. **Bound all buffers and collections:**
@@ -144,6 +175,26 @@ These are mandatory for ALL code, regardless of security baseline:
 4. **Sanitize user input before interpolation** into templates, markdown, or card content.
 
 These are NOT optional. They are not "nice to have." They prevent the security vulnerabilities that all 4 benchmark implementations had.
+
+## External Service Dependencies
+
+If your unit depends on an external service (database, Redis, message queue, third-party API):
+
+1. **Prefer in-memory alternatives for unit tests:**
+   - SQLite (in-memory mode) instead of PostgreSQL/MySQL
+   - Plain Map/Object instead of Redis
+   - Array-based queue instead of RabbitMQ/SQS
+   - This keeps tests fast and avoids CI environment issues.
+
+2. **If the project already has a docker-compose.yml** with the required service: use it for integration tests. Run `docker compose up -d {service}` before tests.
+
+3. **If no docker-compose exists and you need a real service:** create a minimal `docker-compose.test.yml` with only the services your unit needs. Keep it in the project root.
+
+4. **For third-party APIs:** always mock at the HTTP boundary (intercept HTTP calls, not internal functions). Use libraries like `nock` (Node), `responses` (Python), `httpmock` (Go/Rust).
+
+5. **Never skip tests because "it needs a database."** Every external dependency has an in-memory or mock alternative. If you cannot find one, create a minimal interface and implement a test double.
+
+Note which approach you used in your Builder Report under "Assumptions and Decisions."
 
 ## Output
 

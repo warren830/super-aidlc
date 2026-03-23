@@ -19,15 +19,23 @@ Super-AIDLC 是面向 AI 编码代理（Kiro、Claude Code）的结构化开发�
 
 Super-AIDLC 是唯一产出零已知安全漏洞代码的方案。多花的时间换来了真正的安全。
 
-## 4 个独有能力
+## 8 个独有能力
 
-**1. 真正的多 Agent 并行构建** -- 独立单元同时 dispatch 到隔离 worktree。5 个单元构建 1 轮，不是 5 轮。
+**1. 真正的多 Agent 并行构建** -- 独立单元同时 dispatch 到隔离 worktree。5 个单元构建 1 轮，不是 5 轮。含冲突处理、超时机制和共享工具去重。
 
-**2. 跨会话学习** -- 读取历史构建日志，避免重复犯错，沿用已建立的模式。每次运行让下次更聪明。
+**2. 跨会话学习** -- 按任务相关性（而非时间）选择历史构建日志。在 `aidlc-docs/patterns.md` 中累积项目模式。每次运行让下次更聪明。
 
 **3. Kiro Specs 集成** -- 读取 `.kiro/specs/`，如果已有需求文档则跳过提问直接构建。构建完回写状态。
 
-**4. 自动验证修复循环** -- 自动跑测试/编译/lint，失败触发 debugger agent 修复，最多重试 3 次。
+**4. 自动验证修复循环** -- 自动跑测试/编译/lint，失败触发 debugger agent 修复，最多重试 3 次。开始前创建回滚检查点。
+
+**5. 独立设计审查** -- Heavy 任务由独立的 Design Reviewer Agent（非自审）检查错误路径覆盖、单元独立性和过度工程。
+
+**6. 接口契约验证** -- 跨单元依赖在设计文档中定义为契约，合并后验证，防止集成失败。
+
+**7. 多语言安全基线** -- 输入安全规则附带 TypeScript、Python、Go、Java、Rust 代码示例。默认开启。
+
+**8. 增量交付** -- 4+ 单元的 Heavy 任务可分批交付，先交付最高价值批次，根据反馈调整后续批次。
 
 ## 快速开始
 
@@ -82,6 +90,7 @@ Ship:          提交 → 推送 → PR
 
 ```
 super-aidlc/
+  VERSION                           # 语义化版本号
   SKILL.md                          # 入口：复杂度路由
   phases/
     inception.md                    # 设计：提问 → 文档 → 审批
@@ -91,6 +100,7 @@ super-aidlc/
     researcher.md                   # 上下文过滤 + 跨会话学习
     architect.md                    # 设计文档生成（不写代码）
     builder.md                      # TDD 构建者 + 输入安全规则
+    design-reviewer.md              # 独立设计文档审查（Heavy）
     spec-reviewer.md                # 第一阶段：做的是要求的吗？
     quality-reviewer.md             # 第二阶段：安全 + 质量过关吗？
     qa.md                           # 浏览器 QA（Playwright，可选）

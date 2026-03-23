@@ -9,6 +9,30 @@ model: opus
 
 The user wants to: $ARGUMENTS
 
+## Dry Run Mode
+
+If the user's input contains `--dry-run` or `--preview`, do NOT execute anything. Instead, display a preview of what Super-AIDLC would do:
+
+```
+Super-AIDLC Dry Run
+Task: {1-line summary}
+Complexity: {Light / Medium / Heavy}
+Workspace: {Greenfield / Brownfield}
+
+Pipeline:
+  {Light: TDD build → review → auto-verify}
+  {Medium: Questions (~N groups) → design doc → parallel TDD build → 2-stage review → auto-verify}
+  {Heavy: Reframe → questions (~N groups) → full design + independent design review → parallel TDD in worktrees → 2-stage review → coverage audit → auto-verify}
+
+Estimated units: {N} ({M} parallel, {K} sequential)
+Artifacts: aidlc-docs/{date}-{slug}/design.md, build-log.md
+Security baseline: {enabled / disabled}
+
+To proceed: re-run without --dry-run
+```
+
+Then STOP. Do not proceed to any phase.
+
 ## Iron Laws
 
 These five rules are non-negotiable. Detail lives in the referenced files.
@@ -54,12 +78,19 @@ Before anything else, determine workspace type:
 
 If `aidlc-docs/` contains prior build logs, extract and apply lessons:
 
-1. **Read the last 3 build-log.md files** (most recent first)
-2. Extract from each:
+1. **Scan ALL build-log summaries first** -- read just the `## Summary` section of every build-log.md (1-2 lines each). This is a quick index scan, not a deep read.
+2. **Select the 3 most relevant logs** -- rank by relevance to the CURRENT task, not by date. A 6-month-old build log about database patterns is more useful than yesterday's CSS fix when building a new API.
+   - Same component or module? High relevance.
+   - Same type of work (API, CLI, UI, infra)? Medium relevance.
+   - Same technology stack? Low-medium relevance.
+   - Unrelated? Skip.
+   - If fewer than 3 are relevant, use what you have (even zero is fine).
+3. **Deep-read the selected logs.** Extract:
    - "Issues Encountered" -- avoid repeating the same mistakes
    - "Decisions Made During Build" -- follow established patterns
    - "Alternatives Considered" -- don't re-evaluate rejected options
-3. **Build a Session Context block** and inject into every builder/reviewer prompt:
+4. **Read `aidlc-docs/patterns.md`** if it exists. This file contains cross-task conventions distilled from prior runs (see below).
+5. **Build a Session Context block** and inject into every builder/reviewer prompt:
 
 ```
 ## Lessons from Prior Runs
@@ -68,8 +99,35 @@ If `aidlc-docs/` contains prior build logs, extract and apply lessons:
 - Do NOT revisit: {rejected alternative and why}
 ```
 
-4. If a prior design doc exists for a SIMILAR feature, reference it:
+6. If a prior design doc exists for a SIMILAR feature, reference it:
    "The {prior feature} used {pattern}. Follow the same pattern unless requirements differ."
+
+### Accumulating Project Patterns
+
+After each successful build, update `aidlc-docs/patterns.md` (create if it does not exist). This file captures cross-task conventions so they don't need to be re-extracted from build logs every time.
+
+```markdown
+# Project Patterns
+Last updated: {date}
+
+## Conventions
+- {e.g., "Test framework: vitest with globals"}
+- {e.g., "API prefix: /api/v1"}
+- {e.g., "Error responses: { error: string, code: string }"}
+
+## Anti-Patterns (learned the hard way)
+- {e.g., "Do NOT use ts-jest -- vitest is the project standard"}
+- {e.g., "Do NOT put route handlers in index.ts -- one file per handler"}
+
+## Stack Decisions
+- {e.g., "Database: SQLite via better-sqlite3 (decided in 2026-03-15 build)"}
+```
+
+Rules for patterns.md:
+- Only add patterns confirmed across 2+ builds (not one-off decisions).
+- Remove patterns that turned out to be wrong.
+- Keep it under 50 lines. If it grows beyond that, prune the least useful entries.
+- This file is the FIRST thing the Researcher reads -- it's the project's institutional memory.
 
 This is what makes Super-AIDLC smarter over time. Each run teaches the next one.
 
@@ -101,6 +159,22 @@ Determine complexity:
 - **Medium** -- New feature, moderate change. Light design + build.
 - **Heavy** -- New system, multi-component, major refactor. Full design + build.
 
+### Fast Path (Light tasks on returning projects)
+
+If ALL of these are true, skip the confirmation prompt and go straight to construction:
+- Complexity is Light
+- `aidlc-docs/` already exists with at least 1 prior build log (returning project)
+- Task is clearly scoped (e.g., "fix bug in X", "update config Y", "add field Z to existing model")
+
+Display a brief status line instead:
+```
+Super-AIDLC | Light | {1-line summary} | Building...
+```
+
+This saves ~30 seconds of round-trip for trivial tasks on projects you already know.
+
+### Standard Path (Medium, Heavy, or first-time Light)
+
 Display to user:
 ```
 Super-AIDLC
@@ -117,6 +191,26 @@ Wait for confirmation.
 
 **Light**: Read `phases/construction.md` and execute.
 **Medium/Heavy**: Read `phases/inception.md` and execute. It will tell you when to proceed to construction.
+
+## Interruption Protocol
+
+If the user changes requirements during the Construction phase (e.g., "wait, I want to change X" or "actually, skip Y"):
+
+1. **Assess impact** -- which units are affected?
+   - Only unstarted units? → Update the design doc, continue. No disruption.
+   - Currently building units? → Let the in-progress builders finish their current RED-GREEN cycle, then stop. Discard incomplete work in those worktrees.
+   - Already completed and reviewed units? → Mark them as "needs modification" in the build log. Complete the current batch first, then rework in a follow-up pass.
+
+2. **Update the design doc** -- record the change in the Decisions Log:
+   ```
+   | Mid-build change | {what changed} | {user requested at construction step N} |
+   ```
+
+3. **Re-assess complexity** -- if the change fundamentally alters scope (e.g., "actually make this a microservice instead of a monolith"), STOP construction and go back to inception. This is rare but important.
+
+4. **Resume construction** with the updated design. Builders that were not affected continue as normal.
+
+The key principle: **never discard work that is already reviewed and passing**. Modify it in a follow-up pass instead.
 
 ## Safety Note
 

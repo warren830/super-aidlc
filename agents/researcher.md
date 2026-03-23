@@ -26,14 +26,23 @@ Always check these if they exist:
 
 ### Prior Build Log Analysis
 
-If `aidlc-docs/` contains prior build logs:
+If `aidlc-docs/` contains prior data:
 
-1. Read the last 3 `build-log.md` files (most recent first)
-2. Extract and include in your output:
+1. **Read `aidlc-docs/patterns.md` FIRST** (if it exists). This is the project's distilled institutional memory -- conventions, anti-patterns, and stack decisions. Include relevant entries directly in your output.
+
+2. **Scan all build-log summaries** -- read just the `## Summary` section of every build-log.md to build a quick index.
+
+3. **Select the 3 most relevant logs** by task similarity (not recency):
+   - Same component, module, or feature area? High relevance.
+   - Same type of work (API, CLI, UI, database)? Medium relevance.
+   - Unrelated? Skip entirely.
+
+4. **Deep-read only the selected logs.** Extract:
    - **Issues Encountered** -- what went wrong and how it was fixed (so builders avoid the same mistakes)
    - **Decisions Made During Build** -- implementation patterns established outside the design doc
    - **Alternatives Considered** -- what was rejected and why (so nobody re-evaluates dead ends)
-3. If a prior design doc covers a similar feature, note it: "See {path} for prior approach to {similar feature}"
+
+5. If a prior design doc covers a similar feature, note it: "See {path} for prior approach to {similar feature}"
 
 This is critical for cross-session learning. Builders who lack this context will repeat past mistakes.
 
@@ -71,7 +80,11 @@ Beyond the task-specific search, explicitly check for:
 
 ## Rules
 
-- **30-80 lines max.** If your summary is longer, you are dumping, not filtering.
+- **Output length scales with complexity:**
+  - Light tasks: **30 lines max.** Just the essentials.
+  - Medium tasks: **80 lines max.** Patterns, constraints, and relevant prior decisions.
+  - Heavy tasks: **150 lines max.** Full context including architecture map, all relevant prior decisions, and integration points.
+  If your summary exceeds the limit, you are dumping, not filtering.
 - **Relevance over completeness.** Better to miss a marginally related doc than include 10 irrelevant ones.
 - **Say what you did not find.** If there is no existing pattern for something, say so explicitly. "No existing auth pattern found" is more useful than silence.
 - **Cite file paths.** Every claim should reference where you found it.

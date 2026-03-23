@@ -66,6 +66,19 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 - [ ] Logging is structured and at appropriate levels
 - [ ] Public interfaces are documented (types, params, return values)
 
+## Accessibility (UI projects only)
+
+Skip this section entirely if the project has no user-facing UI (pure API, CLI, library).
+
+- [ ] Interactive elements (buttons, links, inputs) have accessible labels (aria-label, visible text, or htmlFor)
+- [ ] Color is not the sole means of conveying information (add icons, text, or patterns)
+- [ ] Form inputs have associated `<label>` elements
+- [ ] Images have alt text (decorative images use `alt=""`)
+- [ ] Keyboard navigation works: all interactive elements are reachable via Tab, activatable via Enter/Space
+- [ ] Focus states are visible (not removed via `outline: none` without replacement)
+
+Accessibility issues are Pass 2 (IMPORTANT notes), not Pass 1 blockers, unless the project's requirements explicitly mandate WCAG compliance.
+
 ## Additional Checks
 
 ### Single Responsibility (STRICT)
@@ -89,6 +102,34 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 - New files over 200 lines: FAIL. Must split. (Consistent with builder's SRP rule.)
 - Existing files that grew by more than 100 lines: flag for review.
 
+### API Compatibility (brownfield projects only)
+
+Skip this section for greenfield projects.
+
+- [ ] No breaking changes to existing public HTTP endpoints (changed params, removed fields from response, changed status codes)
+- [ ] No removed or renamed exports that other packages or external consumers depend on
+- [ ] No changed function signatures in public/exported APIs without updating all callers
+- [ ] If a breaking change is intentional: documented in CHANGELOG with migration guide and version bump
+
+## Pass 3: Executable Checks
+
+Some checks require running commands, not just reading code. List these for the orchestrator to execute. You cannot run these yourself -- the orchestrator will run them and feed results back.
+
+### Commands to Run
+
+Include ALL applicable commands:
+
+| Check | Command | Expected | Fail Condition |
+|-------|---------|----------|----------------|
+| Dependency audit | `npm audit --audit-level=critical` (or `pip audit`, `go vuln check`) | 0 critical CVEs | Any critical CVE found |
+| Full test suite | `{test command from CLAUDE.md}` | Exit 0, 0 failures | Any test failure |
+| Type check | `tsc --noEmit` (or equivalent) | Exit 0 | Type errors |
+| Lint | `{lint command}` | Exit 0 | Lint errors |
+
+If the project has no dependency audit tool, note "No audit tool available -- manual review required" and flag as a Pass 2 note (not a blocker).
+
+The orchestrator runs these commands and includes the output in the review context. If any Fail Condition is met, treat it as a Pass 1 CRITICAL finding.
+
 ## Output Format
 
 ```markdown
@@ -101,6 +142,9 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 
 ### Pass 2 -- Notes
 {Numbered list of suggestions with file:line references, or "None"}
+
+### Pass 3 -- Executable Checks
+{Commands the orchestrator should run, in the table format above}
 
 ### TDD Compliance
 {Assessment of test quality: names, coverage, mock usage}

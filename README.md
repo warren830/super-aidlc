@@ -21,15 +21,23 @@ Super-AIDLC is the only approach that produces code with zero known security vul
 
 ## What Makes It Unique
 
-Four capabilities no other AI workflow has:
+Eight capabilities no other AI workflow has:
 
-**1. True Parallel Multi-Agent Builds** -- Independent units dispatch simultaneously to isolated worktrees. 5 units build in 1 round, not 5.
+**1. True Parallel Multi-Agent Builds** -- Independent units dispatch simultaneously to isolated worktrees. 5 units build in 1 round, not 5. Includes conflict resolution, timeout handling, and shared utility deduplication.
 
-**2. Cross-Session Learning** -- Reads prior build logs to avoid past mistakes and follow established patterns. Each run teaches the next.
+**2. Cross-Session Learning** -- Selects prior build logs by task relevance (not just recency). Accumulates project patterns in `aidlc-docs/patterns.md`. Each run teaches the next.
 
 **3. Kiro Specs Integration** -- Reads `.kiro/specs/` before asking questions. If specs exist, skips straight to building. Writes back after construction.
 
-**4. Auto-Verification Loop** -- Runs test/build/lint automatically. Failures trigger the debugger agent, which fixes and re-verifies up to 3 times.
+**4. Auto-Verification Loop** -- Runs test/build/lint automatically. Failures trigger the debugger agent, which fixes and re-verifies up to 3 times. Creates a rollback checkpoint before starting.
+
+**5. Independent Design Review** -- Heavy tasks get a dedicated Design Reviewer Agent (not self-review) that checks error path coverage, unit independence, and over-engineering.
+
+**6. Interface Contract Verification** -- Cross-unit dependencies are defined as contracts in the design doc and verified after merge, preventing integration failures.
+
+**7. Multi-Language Security Baseline** -- Input safety rules with code examples for TypeScript, Python, Go, Java, and Rust. Default on.
+
+**8. Incremental Delivery** -- Heavy tasks with 4+ units can be shipped in batches, getting user feedback before building the next batch.
 
 ## Quick Start
 
@@ -84,6 +92,7 @@ Ship:          Commit → Push → PR
 
 ```
 super-aidlc/
+  VERSION                           # Semantic version
   SKILL.md                          # Entry point: complexity routing
   phases/
     inception.md                    # Design: questions → doc → approval
@@ -93,6 +102,7 @@ super-aidlc/
     researcher.md                   # Context filter + cross-session learning
     architect.md                    # Design doc producer (no code)
     builder.md                      # TDD builder + input safety rules
+    design-reviewer.md              # Independent design doc review (Heavy)
     spec-reviewer.md                # Pass 1: built what was asked?
     quality-reviewer.md             # Pass 2: secure + well-built?
     qa.md                           # Browser QA (Playwright, optional)
