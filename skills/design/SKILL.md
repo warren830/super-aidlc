@@ -9,29 +9,58 @@ model: opus
 
 The user wants to design: $ARGUMENTS
 
-Read and execute `phases/inception.md`, but STOP after the design doc is approved. Do NOT proceed to construction.
+Run the full inception phase but STOP after the design doc is approved. Do NOT proceed to construction.
 
-## What Happens
+## Process
 
-1. **Parallel Research** (4 agents) → codebase patterns, knowledge base, git history, best practices
-2. **Structured Questions** → with options and recommendations, context-aware elimination
-3. **Design Document** → architecture diagram, error/rescue map, units of work, decisions log
-4. **Design Review** → independent reviewer for Heavy tasks, self-review for Medium
+### 1. Check for Existing Requirements
 
-## Output
+Scan `aidlc-docs/` for `*requirements.md` matching this task. If found, use as primary input and skip redundant questions.
 
-Design doc at `aidlc-docs/{date}-{slug}/design.md`
+### 2. Parallel Research (brownfield)
 
-## After Design
+If existing code is present, dispatch research agents in parallel:
+- **Researcher** -- codebase patterns, architecture, constraints
+- **Learnings Researcher** -- search `aidlc-docs/solutions/` for related solutions
+- **Git History Analyzer** -- code evolution, hotspots (Medium/Heavy)
+- **Best Practices Researcher** -- external patterns (Heavy only)
+
+### 3. Ask Structured Questions
+
+- Context-aware: skip questions already answered by existing docs
+- Grouped by topic, with options and recommendations
+- One group at a time, wait for answers
+
+### 4. Produce Design Document
+
+Write to `aidlc-docs/{date}-{slug}/design.md` with mandatory sections:
+- Requirements
+- Architecture (ASCII diagram REQUIRED)
+- Data Model
+- NFR Plan (performance, reliability, security, observability)
+- Error/Rescue Map (every external boundary, 5+ rows minimum)
+- Interface Contracts (cross-unit dependencies)
+- Units of Work (with parallelism markings)
+- Decisions Log
+- Alternatives Considered
+
+### 5. Design Review
+
+- Heavy: dispatch independent Design Reviewer Agent
+- Medium: self-review against 3 criteria (error coverage, unit independence, over-engineering)
+
+### 6. User Approval
+
+Present the design doc and STOP. Wait for explicit approval.
 
 ```
 Design complete. Next steps:
-  /super-aidlc [task]     → build from this design (auto-detects existing design doc)
+  /super-aidlc [task]     → build from this design (auto-detects existing doc)
   Edit the design doc     → refine before building
 ```
 
-## When to Use Standalone
+## Rules
 
-- You want to review the design before committing to a build
-- You're planning work for a team and need a spec
-- You want to explore the architecture without writing code yet
+- **No code in this phase.** Only documents.
+- **Ask questions BEFORE designing.** Not after.
+- **Architecture diagram is mandatory.** ASCII art, not prose.

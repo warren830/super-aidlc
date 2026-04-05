@@ -7,26 +7,54 @@ model: opus
 
 # Ship
 
-Read and execute `phases/operations.md`.
+Ship context: $ARGUMENTS
 
-## What Happens
+## Pre-Ship Verification (all must pass)
 
-1. **Verification Gate** → all tests pass, build passes, lint passes
-2. **Commit** → meaningful commit message(s), one per logical unit
-3. **Push** → push branch to remote
-4. **PR** → create PR with summary, test results, design doc link
+```bash
+# 1. Run full test suite
+{project test command from CLAUDE.md or package.json}
 
-## Pre-Ship Checklist (auto-verified)
+# 2. Build
+{project build command}
 
-- [ ] All tests pass
-- [ ] Build passes
-- [ ] Lint passes
-- [ ] No uncommitted changes outside the feature scope
-- [ ] Design doc exists (Medium/Heavy tasks)
-
-## Usage
-
+# 3. Lint
+{project lint command}
 ```
-/super-aidlc:ship                    → ship current changes
-/super-aidlc:ship feat/my-feature    → ship to specific branch
+
+If any fail, fix and re-run (max 3 iterations). If still failing after 3, escalate to user with specific errors.
+
+## Commit
+
+- Meaningful commit message(s) following project conventions
+- One commit per logical unit, or one combined commit
+- Do NOT include unrelated changes
+
+```bash
+git add {specific files}
+git commit -m "feat(scope): description"
 ```
+
+## Push + PR
+
+```bash
+git push origin {branch}
+```
+
+Create PR with:
+- Summary of what was built
+- Link to design doc (if exists in `aidlc-docs/`)
+- Test results
+- QA results (if `/super-aidlc:qa` was run)
+
+## Post-Ship
+
+Suggest:
+- `/super-aidlc:compound` if the session had non-trivial learnings
+- Update `aidlc-docs/patterns.md` if new conventions were established
+
+## Rules
+
+- **All tests must pass before pushing.** No exceptions.
+- **No force push to main/master.** Warn and refuse.
+- **Commit messages in English.** Even if artifacts are in another language.
