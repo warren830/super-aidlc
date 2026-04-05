@@ -1,3 +1,10 @@
+---
+name: super-aidlc:compound
+description: Extract structured knowledge from the current session into aidlc-docs/solutions/. Run after solving non-trivial bugs or discovering important patterns.
+argument-hint: "[optional: brief context about what to document]"
+model: opus
+---
+
 # Compound Knowledge Extraction
 
 Document a recently solved problem or learned insight to compound the project's institutional knowledge.
@@ -10,7 +17,7 @@ Each documented solution compounds the team's knowledge. The first time a proble
 
 ## When to Use
 
-Run `/compound` (or invoke this skill) after:
+Run `/super-aidlc:compound` (or invoke this skill) after:
 - Solving a non-trivial bug (not a typo or config tweak)
 - Discovering an important pattern or anti-pattern
 - Making an architectural decision with lessons learned
@@ -129,7 +136,7 @@ WAIT for all Phase 1 subagents to complete before proceeding.
 
 After writing the new learning, decide whether older docs should be refreshed.
 
-Invoke `/compound-refresh` with a narrow scope hint when:
+Invoke `/super-aidlc:compound-refresh` with a narrow scope hint when:
 - A related doc recommends an approach the new fix contradicts
 - The new fix clearly supersedes an older solution
 - The work involved a refactor/migration that likely invalidated older references
@@ -156,7 +163,7 @@ For smaller insights that don't need full parallel research:
 
 ## Integration with Super-AIDLC
 
-The Construction phase (Step 8: Record build log) should suggest running `/compound` when:
+The Construction phase (Step 8: Record build log) should suggest running `/super-aidlc:compound` when:
 - The build encountered and solved a non-trivial bug
 - The debugger agent was invoked during auto-verification
 - A novel pattern was established that future sessions should know about

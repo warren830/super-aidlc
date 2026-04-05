@@ -39,7 +39,7 @@ Eleven capabilities no other AI workflow has:
 
 **8. Incremental Delivery** -- Heavy tasks with 4+ units can be shipped in batches, getting user feedback before building the next batch.
 
-**9. Compound Knowledge System** -- `/compound` extracts structured solutions into `aidlc-docs/solutions/` with YAML frontmatter after solving non-trivial problems. `/compound-refresh` maintains quality with Keep/Update/Consolidate/Replace/Delete operations. Three-layer search: conventions → solutions → build logs.
+**9. Compound Knowledge System** -- `/super-aidlc:compound` extracts structured solutions into `aidlc-docs/solutions/` with YAML frontmatter after solving non-trivial problems. `/super-aidlc:compound-refresh` maintains quality with Keep/Update/Consolidate/Replace/Delete operations. Three-layer search: conventions → solutions → build logs.
 
 **10. Parallel Research Agents** -- Medium/Heavy tasks dispatch up to 4 research agents simultaneously: Researcher (codebase), Learnings Researcher (solutions knowledge base), Git History Analyzer (code evolution), Best Practices Researcher (external patterns).
 

@@ -497,7 +497,7 @@ This log is for future reference -- next time super-aidlc runs on this project, 
 
 After recording the build log, evaluate whether this session produced knowledge worth compounding:
 
-**Suggest `/compound` when:**
+**Suggest `/super-aidlc:compound` when:**
 - The build encountered and solved a non-trivial bug
 - The debugger agent was invoked during auto-verification (something unexpected happened)
 - A novel pattern was established that future sessions should know about
@@ -514,4 +514,4 @@ This session resolved {N} issues and established {N} new patterns.
 Run /compound to document these for future sessions? (y/n)
 ```
 
-If the user declines, skip. The knowledge lives in the build log either way -- `/compound` just makes it structured and searchable.
+If the user declines, skip. The knowledge lives in the build log either way -- `/super-aidlc:compound` just makes it structured and searchable.

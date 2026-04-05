@@ -1,3 +1,10 @@
+---
+name: super-aidlc:compound-refresh
+description: Maintain aidlc-docs/solutions/ quality. Reviews learnings against current codebase, applies Keep/Update/Consolidate/Replace/Delete operations.
+argument-hint: "[optional: scope hint like 'performance-issues' or specific doc path]"
+model: opus
+---
+
 # Compound Refresh
 
 Maintain the quality of `aidlc-docs/solutions/` over time. Reviews existing learnings against the current codebase, then refreshes any derived pattern docs that depend on them.
@@ -126,7 +133,7 @@ Look for consolidation opportunities:
 
 ## Integration with Super-AIDLC
 
-The `/compound` skill invokes `/compound-refresh` selectively in Phase 2.5 when new knowledge contradicts or supersedes existing docs.
+The `/compound` skill invokes `/super-aidlc:compound-refresh` selectively in Phase 2.5 when new knowledge contradicts or supersedes existing docs.
 
 The Researcher agent checks `status: stale` in frontmatter and deprioritizes stale docs in search results.
 

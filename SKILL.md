@@ -157,7 +157,7 @@ If you skip any of these, you are just doing plan mode. The whole point is these
 6. **Parallel specialist reviewers** -- correctness, security, performance, and adversarial reviewers run in parallel with confidence gating.
 7. **Create persistent artifacts** -- aidlc-docs/ that accumulate across sessions.
 8. **Auto-verification loop** -- tests/build/lint are run automatically; failures trigger the debugger agent and re-verify until all green or 3 iterations.
-9. **Compound knowledge system** -- `/compound` extracts structured solutions into `aidlc-docs/solutions/` for future searchability. `/compound-refresh` maintains knowledge base quality.
+9. **Compound knowledge system** -- `/super-aidlc:compound` extracts structured solutions into `aidlc-docs/solutions/` for future searchability. `/super-aidlc:compound-refresh` maintains knowledge base quality.
 
 ## Step 1: Detect Workspace
 
@@ -182,10 +182,10 @@ Super-AIDLC v4 uses a three-layer knowledge system, searched in this order:
 
 **Layer 2: Structured Solutions** (`aidlc-docs/solutions/`)
 - Structured knowledge base with YAML frontmatter for searchability.
-- Created by `/compound` after solving non-trivial problems.
+- Created by `/super-aidlc:compound` after solving non-trivial problems.
 - Organized by category: `runtime-issues/`, `patterns/`, `security-issues/`, etc.
 - Searched by module, component, tags. Stale docs deprioritized.
-- Maintained by `/compound-refresh` (Keep/Update/Consolidate/Replace/Delete).
+- Maintained by `/super-aidlc:compound-refresh` (Keep/Update/Consolidate/Replace/Delete).
 
 **Layer 3: Build Logs** (`aidlc-docs/*/build-log.md`)
 - Per-session history with summary sections for quick scanning.
@@ -247,8 +247,8 @@ In addition to the main `/super-aidlc` workflow, two standalone commands manage 
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/compound` | Extract structured solution from current session | After solving non-trivial bugs, discovering patterns |
-| `/compound-refresh` | Maintain knowledge base quality | After refactors, migrations, periodically |
+| `/super-aidlc:compound` | Extract structured solution from current session | After solving non-trivial bugs, discovering patterns |
+| `/super-aidlc:compound-refresh` | Maintain knowledge base quality | After refactors, migrations, periodically |
 
 These are defined in `skills/compound/SKILL.md` and `skills/compound-refresh.md`.
 
