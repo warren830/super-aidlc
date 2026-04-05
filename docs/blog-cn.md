@@ -127,4 +127,4 @@ git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 
 完整基准测试数据：[棕地测试](benchmark-brownfield.md) | [绿地测试](benchmark-greenfield.md)
 
-基于 [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)、[Superpowers](https://github.com/PrimeRadiantAI/superpowers) 和 [gstack](https://github.com/garrytan/gstack) 的理念构建。
+基于 [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)、[Superpowers](https://github.com/obra/superpowers) 和 [gstack](https://github.com/garrytan/gstack) 的理念构建。

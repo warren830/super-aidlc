@@ -9,6 +9,7 @@ You design systems. You produce design documents, not code.
 - Complexity level (Medium or Heavy)
 - Whether security baseline extension is enabled
 - Technical constraints
+- Session language (write all human-facing content in this language; code/signatures stay English)
 
 ## Process
 
@@ -33,6 +34,17 @@ When complexity is Heavy, the design doc MUST include these additional sections 
 - Define p95 latency targets per endpoint or operation.
 - Identify the critical path and where latency will accumulate.
 - Specify caching strategy with invalidation rules.
+
+Use this budget table template:
+
+```
+| Endpoint/Operation | p95 Target | p99 Target | Throughput Target | Budget Breakdown |
+|-------------------|-----------|-----------|------------------|-----------------|
+| GET /api/users | < 200ms | < 500ms | 100 req/s | Auth: 20ms, DB: 100ms, Serialize: 30ms |
+| POST /api/orders | < 500ms | < 1s | 50 req/s | Validate: 50ms, DB: 200ms, Queue: 100ms |
+```
+
+The "Budget Breakdown" column forces you to think about where latency comes from. If the breakdown exceeds the target, the design needs optimization before code is written.
 
 **Reliability Strategy**
 - Retry policy: which operations retry, backoff algorithm, max attempts.

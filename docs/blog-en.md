@@ -179,4 +179,4 @@ git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 
 Full benchmark data: [Brownfield tests](benchmark-brownfield.md) | [Greenfield tests](benchmark-greenfield.md)
 
-Built on ideas from [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows), [Superpowers](https://github.com/PrimeRadiantAI/superpowers), and [gstack](https://github.com/garrytan/gstack).
+Built on ideas from [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows), [Superpowers](https://github.com/obra/superpowers), and [gstack](https://github.com/garrytan/gstack).

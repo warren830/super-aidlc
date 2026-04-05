@@ -70,14 +70,33 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 
 Skip this section entirely if the project has no user-facing UI (pure API, CLI, library).
 
+### WCAG 2.1 AA Quick Checks
+
+**Structure & Semantics:**
 - [ ] Interactive elements (buttons, links, inputs) have accessible labels (aria-label, visible text, or htmlFor)
-- [ ] Color is not the sole means of conveying information (add icons, text, or patterns)
 - [ ] Form inputs have associated `<label>` elements
 - [ ] Images have alt text (decorative images use `alt=""`)
-- [ ] Keyboard navigation works: all interactive elements are reachable via Tab, activatable via Enter/Space
-- [ ] Focus states are visible (not removed via `outline: none` without replacement)
+- [ ] Page has a logical heading hierarchy (h1 → h2 → h3, no skips)
+- [ ] Landmarks used correctly (`<nav>`, `<main>`, `<aside>`, `<footer>`)
 
-Accessibility issues are Pass 2 (IMPORTANT notes), not Pass 1 blockers, unless the project's requirements explicitly mandate WCAG compliance.
+**Visual:**
+- [ ] Color is not the sole means of conveying information (add icons, text, or patterns)
+- [ ] Text contrast ratio meets 4.5:1 minimum (3:1 for large text)
+- [ ] Focus states are visible (not removed via `outline: none` without replacement)
+- [ ] No content relies solely on hover (must be keyboard-accessible too)
+
+**Interaction:**
+- [ ] Keyboard navigation works: all interactive elements are reachable via Tab, activatable via Enter/Space
+- [ ] No keyboard traps (Tab can always leave a component)
+- [ ] Modal dialogs trap focus correctly (Tab cycles within modal, Escape closes)
+- [ ] Error messages are announced to screen readers (use `role="alert"` or `aria-live`)
+
+**Dynamic Content:**
+- [ ] Loading states are announced (`aria-busy`, `aria-live="polite"`)
+- [ ] Route changes announce the new page title to screen readers
+- [ ] Toast/notification messages use `aria-live` regions
+
+Accessibility issues are Pass 2 (IMPORTANT notes), not Pass 1 blockers, unless the project's requirements explicitly mandate WCAG compliance or the user specifies `--a11y-strict`.
 
 ## Additional Checks
 
@@ -152,6 +171,10 @@ The orchestrator runs these commands and includes the output in the review conte
 ### Summary
 {1-2 sentences: what is good, what needs fixing}
 ```
+
+## Language
+
+Write your review output in the session language (passed in your prompt). File paths, line numbers, code references, and checklist item names remain in English.
 
 ## Rules
 

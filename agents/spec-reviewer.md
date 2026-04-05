@@ -70,6 +70,10 @@ The builder may be incomplete, inaccurate, or optimistic. Their report may claim
 {1-2 sentences: does the implementation match the spec?}
 ```
 
+## Language
+
+Write your review output in the session language (passed in your prompt). File paths, line numbers, and code references remain in English.
+
 ## Rules
 
 - Be specific. "Missing feature" is useless. "Login endpoint at auth.ts:42 does not validate email format per requirement 3" is actionable.

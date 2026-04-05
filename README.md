@@ -21,7 +21,7 @@ Super-AIDLC is the only approach that produces code with zero known security vul
 
 ## What Makes It Unique
 
-Eight capabilities no other AI workflow has:
+Eleven capabilities no other AI workflow has:
 
 **1. True Parallel Multi-Agent Builds** -- Independent units dispatch simultaneously to isolated worktrees. 5 units build in 1 round, not 5. Includes conflict resolution, timeout handling, and shared utility deduplication.
 
@@ -38,6 +38,12 @@ Eight capabilities no other AI workflow has:
 **7. Multi-Language Security Baseline** -- Input safety rules with code examples for TypeScript, Python, Go, Java, and Rust. Default on.
 
 **8. Incremental Delivery** -- Heavy tasks with 4+ units can be shipped in batches, getting user feedback before building the next batch.
+
+**9. Compound Knowledge System** -- `/compound` extracts structured solutions into `aidlc-docs/solutions/` with YAML frontmatter after solving non-trivial problems. `/compound-refresh` maintains quality with Keep/Update/Consolidate/Replace/Delete operations. Three-layer search: conventions → solutions → build logs.
+
+**10. Parallel Research Agents** -- Medium/Heavy tasks dispatch up to 4 research agents simultaneously: Researcher (codebase), Learnings Researcher (solutions knowledge base), Git History Analyzer (code evolution), Best Practices Researcher (external patterns).
+
+**11. Parallel Specialist Reviewers** -- Stage 2 code review dispatches correctness, security, performance, and adversarial reviewers in parallel with confidence gating and findings dedup.
 
 ## Quick Start
 
@@ -69,15 +75,19 @@ Assess complexity → Light / Medium / Heavy
 ### Heavy Pipeline
 
 ```
-Inception:     Reframe → Questions → Design Doc → Approve
+Brainstorm:    WHO → WHAT → WHY → Approaches → Scope (optional, Heavy)
+                  ↓
+Inception:     Parallel Research (4 agents) → Questions → Design Doc → Approve
                   ↓
 Construction:  [U1] [U2] [U3]  ← parallel worktrees, each TDD
                   ↓    ↓    ↓
-               Spec Review → Quality Review → Merge
+               Spec Review → Parallel Quality Reviews → Merge
                   ↓
 Verify:        Test → Build → Lint → (fail? → fix → retry x3) → All green
                   ↓
 Ship:          Commit → Push → PR
+                  ↓
+Compound:      Extract knowledge → aidlc-docs/solutions/ (optional)
 ```
 
 ## Five Iron Laws
@@ -92,39 +102,53 @@ Ship:          Commit → Push → PR
 
 ```
 super-aidlc/
-  VERSION                           # Semantic version
-  SKILL.md                          # Entry point: complexity routing
+  VERSION                           # Semantic version (4.0.0)
+  SKILL.md                          # Entry point: complexity routing + commands
   phases/
-    inception.md                    # Design: questions → doc → approval
-    construction.md                 # Build: TDD + parallel + review + auto-verify
+    brainstorm.md                   # Pre-inception exploration (optional, v4)
+    inception.md                    # Design: parallel research → questions → doc → approval
+    construction.md                 # Build: TDD + parallel + review + compound
     operations.md                   # Ship: browser QA, release, doc update
   agents/
-    researcher.md                   # Context filter + cross-session learning
+    researcher.md                   # Context filter + three-layer knowledge search
+    learnings-researcher.md         # Solutions knowledge base searcher (v4)
+    git-history-analyzer.md         # Code evolution + hotspot analysis (v4)
+    best-practices-researcher.md    # External patterns + framework docs (v4)
     architect.md                    # Design doc producer (no code)
     builder.md                      # TDD builder + input safety rules
     design-reviewer.md              # Independent design doc review (Heavy)
-    spec-reviewer.md                # Pass 1: built what was asked?
-    quality-reviewer.md             # Pass 2: secure + well-built?
+    spec-reviewer.md                # Stage 1: built what was asked?
+    quality-reviewer.md             # Stage 2: overall quality gate
+    correctness-reviewer.md         # Parallel: logic errors + edge cases (v4)
+    security-reviewer.md            # Parallel: vulnerabilities (v4)
+    performance-reviewer.md         # Parallel: perf + resources (v4)
+    adversarial-reviewer.md         # Parallel: failure scenarios (v4)
     qa.md                           # Browser QA (Playwright, optional)
     debugger.md                     # Root-cause investigation
+  skills/
+    compound/SKILL.md               # Knowledge extraction after sessions (v4)
+    compound-refresh.md             # Knowledge base maintenance (v4)
   guards/
     careful.md                      # Destructive command interception
     freeze.md                       # Edit scope lock
     verification.md                 # Evidence-before-claims gate
   rules/
     tdd.md                          # TDD reference + rationalization prevention
-    review-protocol.md              # Two-stage review protocol
+    review-protocol.md              # Two-stage review + parallel specialists
     anti-patterns.md                # Testing anti-patterns
+    overconfidence-prevention.md    # Anti-skip rules + self-check protocol
+    context-budget.md               # Token efficiency + lazy-loading strategy
   extensions/
     security-baseline.md            # Input safety + production readiness (default-on)
   adapters/
-    kiro/install.sh                 # One-line Kiro install
-    claude-code/install.sh          # One-line Claude Code install
+    claude-code/install.sh          # Claude Code install (--verify, --global)
+    kiro/install.sh                 # Kiro install
   docs/
     blog-en.md                      # How and why we built this
     blog-cn.md                      # Chinese version
-    benchmark-brownfield.md         # Tests on existing codebase
-    benchmark-greenfield.md         # Tests building from scratch
+    benchmark-greenfield.md         # Single-session benchmark
+    benchmark-brownfield.md         # Brownfield benchmark
+    benchmark-cross-session.md      # Cross-session knowledge benchmark (v4)
 ```
 
 ## Credits

@@ -1,0 +1,54 @@
+# Compound Knowledge Schema
+# Canonical frontmatter fields and enum values for aidlc-docs/solutions/
+
+# Track classification based on problem_type
+tracks:
+  bug:
+    description: "A specific problem that was diagnosed and fixed"
+    required_fields: [title, date, problem_type, category, module, severity]
+    optional_fields: [component, tags, related_issues, resolution_type, root_cause, symptoms, related_docs, last_updated]
+  knowledge:
+    description: "A learned practice, pattern, or insight"
+    required_fields: [title, date, problem_type, category, module]
+    optional_fields: [component, tags, applies_when, related_docs, last_updated]
+
+# problem_type determines track and category
+problem_type:
+  # Bug track types
+  - build-failure          # Build/compile errors
+  - runtime-error          # Crashes, exceptions, panics
+  - test-failure           # Test suite failures
+  - performance-issue      # Slow queries, memory leaks, high CPU
+  - security-vulnerability # Security findings
+  - data-integrity         # Data corruption, inconsistency
+  - integration-issue      # API/service integration problems
+  - configuration-error    # Config/environment issues
+  - deployment-issue       # CI/CD, deploy failures
+  - concurrency-bug        # Race conditions, deadlocks
+  # Knowledge track types
+  - architecture-decision  # Design choices and rationale
+  - best-practice          # Established patterns to follow
+  - anti-pattern           # Patterns to avoid
+  - tooling-insight        # Tool/framework usage tips
+  - debugging-technique    # Debugging approaches that work
+  - migration-guide        # How to migrate/upgrade something
+
+severity:
+  - critical    # Data loss, security breach, service down
+  - high        # Feature broken, significant degradation
+  - medium      # Partial feature loss, workaround exists
+  - low         # Cosmetic, minor inconvenience
+
+resolution_type:
+  - code-fix           # Changed application code
+  - config-change      # Changed configuration
+  - dependency-update  # Updated/changed a dependency
+  - architecture-change # Structural/design change
+  - workaround         # Temporary fix, not root cause
+  - documentation      # Updated docs/knowledge only
+
+# Status tracking
+status:
+  - active    # Current and trustworthy
+  - stale     # May be outdated, needs review
+  - superseded # Replaced by a newer doc (link in related_docs)

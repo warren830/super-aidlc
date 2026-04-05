@@ -73,6 +73,46 @@ Every builder agent MUST enforce these (security baseline is default-on). Exampl
 - Use lock files with pinned versions
 - Remove unused dependencies
 
+**Automated audit commands by language:**
+
+| Language | Audit Command | Install If Missing |
+|----------|--------------|-------------------|
+| Node.js | `npm audit --audit-level=critical` | Built-in |
+| Python | `pip-audit` | `pip install pip-audit` |
+| Go | `govulncheck ./...` | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
+| Rust | `cargo audit` | `cargo install cargo-audit` |
+| Java | `mvn dependency-check:check` (OWASP plugin) | Add to pom.xml |
+
+These are run automatically in the verification loop (construction.md Step 6). Any critical CVE is a FAIL -- the build does not ship until dependencies are clean or the user explicitly accepts the risk.
+
+### Dependency Verification (Slopsquatting Prevention)
+
+Research across 576,000 AI-generated code samples found that **19.7% of AI-recommended packages do not exist**. Attackers register these hallucinated package names with malware. This is called "slopsquatting" and is the #1 AI-specific supply chain attack vector.
+
+**Rules for AI-generated dependency additions:**
+
+1. **Before adding ANY new dependency**, verify it exists:
+   - npm: `npm view {package-name} version` -- must return a version, not 404
+   - pip: `pip index versions {package-name}` -- must return versions
+   - go: check `pkg.go.dev/{module-path}` exists
+   - cargo: `cargo search {crate-name}` -- must return results
+
+2. **Verify package popularity/legitimacy:**
+   - Check weekly downloads (npm: `npm view {pkg} --json | jq .time`)
+   - Packages with < 100 weekly downloads should be flagged for review
+   - Check publication date -- packages created in the last 30 days are suspicious
+
+3. **Never install a dependency without explicit user approval** if:
+   - Package name was suggested by the AI (not from project's existing dependencies)
+   - Package has no README or minimal documentation
+   - Package author has no other published packages
+
+4. **Prefer well-known packages** over obscure alternatives:
+   - If the AI suggests `fast-json-parser`, check if `JSON.parse()` or `ajv` suffices
+   - If the AI suggests a utility package, check if the functionality exists in the standard library
+
+This is NOT paranoia. 87% of hallucinated package names are plausible-sounding, and 58% are repeatable across runs, making them predictable attack targets.
+
 ### File Upload Validation
 - Validate file type against an allowlist (not just extension -- check content type)
 - Enforce maximum file size at the framework/gateway level

@@ -4,6 +4,29 @@
 
 Do NOT write any code in this phase. This phase produces documents, not code.
 
+## Step -1: Problem Validation (Heavy only)
+
+Before any design work, validate that the problem is worth solving. AIDLC-workflows' community found that jumping straight to requirements without validating the problem leads to well-engineered solutions to the wrong problems (issue #132).
+
+Ask these three forcing questions:
+
+```
+Before we design anything, three quick checks:
+
+1. WHO is blocked by this problem today?
+   {Specific person/team/user, not "everyone"}
+
+2. WHAT are they doing instead right now?
+   {The current workaround -- if none exists, the problem may not be real}
+
+3. WHY now?
+   {What changed that makes this worth building today vs. next quarter?}
+```
+
+Wait for answers. If the user cannot answer #1 and #2, the problem may not be validated enough for a Heavy investment. Suggest starting with a Medium-scoped prototype instead.
+
+If answers are clear, proceed to Step 0.
+
 ## Step 0: Problem Reframing (Heavy only)
 
 For Heavy complexity tasks, challenge the problem definition before asking detailed questions. The user's first description is often a solution, not a problem.
@@ -34,30 +57,71 @@ If this is wrong, let me know. Otherwise I'll proceed.
 
 Do NOT wait for confirmation -- proceed to Step 1 immediately. The user will interrupt if the assumption is wrong. This saves a round-trip while still surfacing misunderstandings early.
 
-## Step 1: Reverse Engineering (brownfield only)
+## Step 0.5: Check for Brainstorm Requirements (new in v4)
 
-If this is a brownfield project, auto-analyze existing code BEFORE asking questions. The component inventory informs better questions.
+Before asking questions, check if a brainstorm phase already produced a requirements doc:
 
-Dispatch a **Researcher Agent** (`agents/researcher.md`):
+1. Scan `aidlc-docs/` for `*requirements.md` files matching the current task.
+2. If found and relevant (same topic, created within 30 days):
+   - Read it thoroughly
+   - Announce: "Found requirements doc from brainstorm phase. Using as primary input."
+   - Carry forward: problem frame, scope boundaries, requirements, assumptions, open questions
+   - Skip questions already answered in the requirements doc
+   - Only ask about gaps
+3. If not found, proceed normally.
 
+## Step 1: Parallel Research (brownfield only)
+
+If this is a brownfield project, dispatch research agents in PARALLEL to gather context before asking questions.
+
+**Always dispatch:**
 ```
-Agent(
-  prompt: "<agents/researcher.md content>
-  Task: {what the user wants to build}
-  Search scope: src/, lib/, app/, aidlc-docs/, .kiro/specs/, .kiro/steering/
-  Question: What is the existing component inventory? Map out:
-  1. Current architecture (components, boundaries, communication)
-  2. Existing design patterns and conventions
-  3. Test setup and CI/CD configuration
-  4. Prior design decisions from aidlc-docs/ or .kiro/specs/
-  5. Integration points the new work must connect to",
-  description: "Research: component inventory for {task}"
-)
+Agent(researcher.md, "Component inventory for {task}")
 ```
 
-Use the Researcher's inventory to tailor the questions in Step 2. If the Researcher found relevant patterns or constraints, reference them when asking questions: "The codebase uses X pattern -- should we follow that here?"
+**If `aidlc-docs/solutions/` exists, also dispatch:**
+```
+Agent(learnings-researcher.md, "Prior solutions related to {task}")
+```
+
+**For Medium/Heavy tasks, also dispatch:**
+```
+Agent(git-history-analyzer.md, "Code evolution for {relevant modules}")
+```
+
+**For Heavy tasks, also dispatch:**
+```
+Agent(best-practices-researcher.md, "Best practices for {technology context}")
+```
+
+Wait for all parallel agents to return. Merge their findings into a unified research context:
+- Researcher: architecture, patterns, constraints
+- Learnings Researcher: prior solutions, dead ends to avoid
+- Git History Analyzer: hotspots, contributor patterns, recent changes
+- Best Practices Researcher: external recommendations
+
+Use the merged context to tailor questions in Step 2. Reference prior solutions and known patterns when asking: "A prior solution in {path} used {approach} -- should we follow that here?"
 
 ## Step 2: Ask Questions
+
+### Context-Aware Question Elimination
+
+Before asking ANY question, scan available context to avoid asking what is already known. Superpowers' community found that agents ask "What type of project is this?" even when CLAUDE.md explicitly states it (issue #849).
+
+**Scan these sources in order:**
+1. `CLAUDE.md` -- project conventions, tech stack, build commands
+2. `README.md` -- project description, architecture overview
+3. `package.json` / `pyproject.toml` / `go.mod` / `Cargo.toml` -- tech stack, dependencies
+4. `.kiro/specs/` and `.kiro/steering/` -- Kiro specs (see below)
+5. `aidlc-docs/patterns.md` -- established conventions from prior runs
+6. Recent `git log --oneline -10` -- what is this project actively working on
+
+**For each question you are about to ask:**
+- If the answer is already in one of these sources: use it and note "(from CLAUDE.md)" or "(from package.json)". Do NOT re-ask.
+- If the answer is partially known: state what you know and ask only about the gap.
+- If the answer is not available: ask as normal.
+
+This saves 1-2 round-trips for returning projects and avoids the frustrating "but I already told you" experience.
 
 ### Pre-fill from Kiro Specs
 
@@ -156,7 +220,9 @@ For **Medium** complexity, create the design doc directly (no separate Architect
 
 ### Design Doc Template
 
-Create `aidlc-docs/{date}-{feature-slug}/design.md` with this EXACT structure:
+Create `aidlc-docs/{date}-{feature-slug}/design.md` in the session language (see SKILL.md Language Selection). All section headers, descriptions, and explanations follow the session language. Error names, interface signatures, and code snippets remain in English.
+
+Template structure:
 
 ```markdown
 # Design: {feature name}

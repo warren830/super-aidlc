@@ -8,6 +8,22 @@ If complexity is Medium/Heavy, verify design doc exists at `aidlc-docs/`. If it 
 
 If complexity is Light (bug fix), skip the pre-flight.
 
+## Step 0b: Plan-Design Alignment Check (Medium/Heavy only)
+
+Before building, verify the construction plan aligns with the approved design. Superpowers' community found that plans and designs always drift apart (issue #602). This step catches that drift.
+
+For each unit in the design doc's Units of Work table:
+1. **Requirements check**: Does the unit's description match a requirement from the design doc?
+2. **Interface check**: If the unit has Interface Contracts, are they still consistent with the Architecture section?
+3. **Error check**: Does the unit's assigned Error/Rescue Map rows match the current error map?
+4. **Scope check**: Are there any units that were added or removed since the design was approved?
+
+If misalignment found:
+- Minor (naming differences, reordering): fix silently, note in build log.
+- Major (missing units, conflicting interfaces, changed scope): STOP and ask user before proceeding.
+
+This takes ~30 seconds and prevents building the wrong thing.
+
 ## Step 1: Set Up Harness (if needed)
 
 Quick check -- does the project have:
@@ -38,6 +54,24 @@ Quick check -- does the project have:
 aidlc-docs/          # Super-AIDLC artifacts (design docs, build logs)
 docs/                # Project docs (if needed)
 ```
+
+**Repository pollution prevention** (Superpowers issue #807):
+
+`aidlc-docs/` is a working directory, not a deliverable. Add it to `.gitignore` by default:
+
+```bash
+# Check if aidlc-docs/ is already in .gitignore
+if [ -f .gitignore ] && ! grep -q 'aidlc-docs/' .gitignore; then
+  echo '# Super-AIDLC working artifacts (design docs, build logs)' >> .gitignore
+  echo 'aidlc-docs/' >> .gitignore
+fi
+```
+
+If the user WANTS to commit design docs (recommended for team projects), they can:
+1. Remove `aidlc-docs/` from .gitignore
+2. Or use `git add -f aidlc-docs/` to force-add specific files
+
+This prevents the "I found 14 files I didn't ask for" experience that plagues other methodologies.
 
 ### If this is an EXISTING project, skip all of this. Use what is already there.
 
@@ -189,6 +223,25 @@ After merging all worktrees, check for duplicate utilities:
 
 This is a quick post-merge cleanup, not a refactoring session. Only deduplicate obvious duplicates -- functions with the same purpose and similar signatures. Do not merge functions that happen to look similar but serve different domains.
 
+### Knowledge Transfer Between Sequential Builders
+
+Superpowers' community found that each subagent starts fresh -- knowledge from Task 9 is invisible to Task 10 (issue #601). For sequential units (not parallel), transfer accumulated discoveries:
+
+When Unit N completes before Unit N+1 starts:
+1. Extract from Unit N's builder report:
+   - "Assumptions and Decisions" section
+   - Any discovered constraints or patterns
+   - Any interface details that affect downstream units
+2. Inject into Unit N+1's builder prompt:
+   ```
+   ## Discoveries from Prior Units
+   - Unit {N} found: {discovery}
+   - Unit {N} decided: {decision and why}
+   - Unit {N} created interface: {details}
+   ```
+
+For parallel units, this does not apply -- parallel builders run simultaneously and cannot share discoveries. Post-merge integration handles cross-unit issues.
+
 ### If only one unit or sequential dependencies -- build directly:
 
 Follow TDD: write failing tests first, then implementation, then run tests + lint.
@@ -300,8 +353,19 @@ REPEAT until all green OR max 3 iterations:
   1. Run full test suite -> if FAIL -> dispatch debugger agent -> fix -> continue
   2. Run build/compile -> if FAIL -> read errors -> fix -> continue
   3. Run linter -> if FAIL -> fix lint errors -> continue
-  4. All pass? -> EXIT loop (success)
+  4. Run dependency audit (if security baseline enabled) -> if CRITICAL CVE -> fix or flag -> continue
+  5. All pass? -> EXIT loop (success)
 ```
+
+### Dependency Audit (if security baseline enabled)
+
+Run the appropriate audit command from `extensions/security-baseline.md`:
+- Node.js: `npm audit --audit-level=critical`
+- Python: `pip-audit` (if installed)
+- Go: `govulncheck ./...` (if installed)
+- Rust: `cargo audit` (if installed)
+
+If the audit tool is not available, note "Dependency audit: tool not available" in the build log and continue. Do not fail the build for a missing tool -- fail only for actual vulnerabilities found.
 
 ### Implementation
 
@@ -382,7 +446,7 @@ If yes, follow `phases/operations.md` ship workflow (if available) or:
 
 ## Step 8: Record
 
-Append to `aidlc-docs/{date}-{feature-slug}/build-log.md`:
+Append to `aidlc-docs/{date}-{feature-slug}/build-log.md` (in the session language -- see SKILL.md Language Selection):
 
 ```markdown
 # Build Log: {feature name}
@@ -428,3 +492,26 @@ These feed back into the design doc or CLAUDE.md for next time.}
 ```
 
 This log is for future reference -- next time super-aidlc runs on this project, it reads prior logs to understand conventions and avoid repeating mistakes.
+
+## Step 9: Compound Knowledge Extraction (optional)
+
+After recording the build log, evaluate whether this session produced knowledge worth compounding:
+
+**Suggest `/compound` when:**
+- The build encountered and solved a non-trivial bug
+- The debugger agent was invoked during auto-verification (something unexpected happened)
+- A novel pattern was established that future sessions should know about
+- An architectural decision was made with non-obvious tradeoffs
+
+**Do NOT suggest when:**
+- The build was clean (no issues, no surprises)
+- Light complexity task with no new insights
+- Pure config/docs changes
+
+Display:
+```
+This session resolved {N} issues and established {N} new patterns.
+Run /compound to document these for future sessions? (y/n)
+```
+
+If the user declines, skip. The knowledge lives in the build log either way -- `/compound` just makes it structured and searchable.

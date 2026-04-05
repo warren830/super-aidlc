@@ -1,6 +1,6 @@
 ---
 name: super-aidlc
-description: Structured development with mandatory design docs, parallel agent builds, TDD enforcement, and two-stage code review. Use for any task beyond a trivial bug fix.
+description: Structured development with design docs, parallel agent builds, TDD enforcement, parallel specialist reviewers, and compound knowledge system. Use for any task beyond a trivial bug fix.
 argument-hint: [describe what you want to build]
 model: opus
 ---
@@ -8,6 +8,85 @@ model: opus
 # Super-AIDLC
 
 The user wants to: $ARGUMENTS
+
+## Flags
+
+Super-AIDLC supports these flags in the user's input:
+
+| Flag | Effect |
+|------|--------|
+| `--dry-run` or `--preview` | Preview the pipeline without executing |
+| `--light` | Force Light complexity (skip design, minimal process) |
+| `--medium` | Force Medium complexity |
+| `--heavy` | Force Heavy complexity (full design + parallel builds) |
+| `--skip-review` | Skip two-stage review (only for trusted fixes like typos) |
+| `--skip-tests` | Skip TDD requirement (only for non-code changes like docs/config) |
+| `--no-security` | Disable security baseline |
+| `--lang=zh` | Generate all artifacts in Chinese (中文) |
+| `--lang=en` | Generate all artifacts in English (default) |
+| `--lang=ja` | Generate all artifacts in Japanese (日本語) |
+| `--lang=ko` | Generate all artifacts in Korean (한국어) |
+
+### Override Safety
+
+Complexity overrides (`--light`, `--medium`, `--heavy`) bypass auto-detection. Use when:
+- Auto-detection chose wrong (e.g., "simple" feature that actually needs design)
+- You want minimal process for a well-understood change (`--light`)
+- You want full rigor for something that looks simple but has risk (`--heavy`)
+
+`--skip-review` and `--skip-tests` are escape hatches for non-code changes. If used with code changes, note the skip in the build log with the reason. Never skip both simultaneously.
+
+## Language Selection
+
+All generated artifacts (design docs, build logs, questions, review reports, QA reports, PR descriptions) use a single language determined at session start.
+
+### Detection Priority (first match wins)
+
+1. **Explicit flag**: `--lang=zh` in the user's input → use that language.
+2. **User's input language**: If the user wrote their task description in Chinese → use Chinese. If in Japanese → use Japanese. Match the language the user is speaking.
+3. **Project convention**: If `aidlc-docs/` contains prior docs in a specific language → follow that language for consistency.
+4. **Default**: English.
+
+### What This Affects
+
+| Artifact | Language Follows |
+|----------|-----------------|
+| Questions to user | Session language |
+| Design document (`aidlc-docs/*/design.md`) | Session language |
+| Build log (`aidlc-docs/*/build-log.md`) | Session language |
+| Error/Rescue Map | Session language (but error names stay in English for grep-ability) |
+| Review reports (spec + quality) | Session language |
+| QA reports | Session language |
+| PR title and description | Session language |
+| Commit messages | English always (convention for git) |
+| Code comments | English always (convention for code) |
+| Variable/function names | English always (convention for code) |
+
+### What This Does NOT Affect
+
+Code is always in English. Variable names, function names, class names, comments in code -- all English. This is a universal coding convention. Only human-facing documents follow the session language.
+
+### Propagation to Subagents
+
+When dispatching any subagent (builder, reviewer, researcher, architect, debugger, QA), inject the language instruction:
+
+```
+Session language: {language}
+Write all human-facing output (reports, questions, explanations) in {language}.
+Code, variable names, and commit messages remain in English.
+```
+
+This ensures all agents produce consistent output. A Chinese design doc followed by an English review report is confusing -- all artifacts must use the same language.
+
+### Display at Session Start
+
+After detecting the language, display:
+
+```
+Language: {language} {flag emoji}
+```
+
+as part of the session status line. If the user wants to change it mid-session, they can say "switch to English" or "切换到中文".
 
 ## Dry Run Mode
 
@@ -18,6 +97,7 @@ Super-AIDLC Dry Run
 Task: {1-line summary}
 Complexity: {Light / Medium / Heavy}
 Workspace: {Greenfield / Brownfield}
+Language: {English / 中文 / 日本語 / 한국어}
 
 Pipeline:
   {Light: TDD build → review → auto-verify}
@@ -43,6 +123,22 @@ These five rules are non-negotiable. Detail lives in the referenced files.
 4. **No shipping without all-green verification loop** -- tests, build, and lint must all pass. Failures are auto-fixed up to 3 times.
 5. **No user input passed unsanitized to shell, filesystem, or templates** -- see `extensions/security-baseline.md`. Default on. Shell injection, path traversal, and unbounded buffers are caught by the quality reviewer.
 
+## Overconfidence Prevention
+
+Read `rules/overconfidence-prevention.md` at the start of every session. Agents routinely skip steps they consider "unnecessary" -- this file prevents that. Before completing any phase, run the self-check protocol from that file.
+
+## Governance Model
+
+Research shows the #1 problem with AI coding is not capability -- it is governance. Super-AIDLC implements the VPC Principle (Verdict-Permission-Boundary Control):
+
+| VPC Layer | Super-AIDLC Implementation |
+|-----------|---------------------------|
+| **Verdicts** (non-negotiable decisions) | Iron Laws -- TDD, root-cause investigation, verification, security baseline |
+| **Permissions** (where AI can operate) | Complexity routing, flags (--skip-review, --skip-tests), user approval gates |
+| **Boundary Control** (automated enforcement) | Guards (careful, freeze, verification), two-stage review, auto-verification loop |
+
+The human defines the laws. The AI executes within those laws. When the AI wants to deviate, it asks -- it does not decide.
+
 ## Three Beliefs
 
 1. **Repository is the system of record** -- if a decision is not written to a file, it does not exist.
@@ -51,15 +147,17 @@ These five rules are non-negotiable. Detail lives in the referenced files.
 
 ## What Makes This Different From Plan Mode
 
-If you skip any of these, you are just doing plan mode. The whole point is these 7 things:
+If you skip any of these, you are just doing plan mode. The whole point is these 9 things:
 
-1. **Ask structured questions BEFORE designing** -- not open-ended; with options and recommendations.
-2. **Create design documents BEFORE code** -- actual .md files with architecture, error maps, diagrams.
-3. **Dispatch parallel builder agents** -- independent units build simultaneously in worktrees.
-4. **Dispatch TWO reviewer agents** -- spec-reviewer then quality-reviewer, sequentially, before merge.
-5. **Create persistent artifacts** -- aidlc-docs/ that accumulate across sessions.
-6. **Auto-verification loop** -- tests/build/lint are run automatically; failures trigger the debugger agent and re-verify until all green or 3 iterations.
-7. **Cross-session learning** -- reads prior build logs to avoid repeating mistakes and follow established patterns.
+1. **Optional brainstorm phase** -- explore requirements before committing to design. See `phases/brainstorm.md`.
+2. **Ask structured questions BEFORE designing** -- not open-ended; with options and recommendations.
+3. **Create design documents BEFORE code** -- actual .md files with architecture, error maps, diagrams.
+4. **Parallel research agents** -- Researcher + Learnings Researcher + Git History Analyzer + Best Practices Researcher gather context simultaneously.
+5. **Dispatch parallel builder agents** -- independent units build simultaneously in worktrees.
+6. **Parallel specialist reviewers** -- correctness, security, performance, and adversarial reviewers run in parallel with confidence gating.
+7. **Create persistent artifacts** -- aidlc-docs/ that accumulate across sessions.
+8. **Auto-verification loop** -- tests/build/lint are run automatically; failures trigger the debugger agent and re-verify until all green or 3 iterations.
+9. **Compound knowledge system** -- `/compound` extracts structured solutions into `aidlc-docs/solutions/` for future searchability. `/compound-refresh` maintains knowledge base quality.
 
 ## Step 1: Detect Workspace
 
@@ -74,33 +172,85 @@ Before anything else, determine workspace type:
 - Scan: `CLAUDE.md`, `README.md`, recent `git log --oneline -10`.
 - Reference prior decisions and conventions throughout the session.
 
-### Cross-Session Learning
+### Cross-Session Learning (Three-Layer Knowledge System)
 
-If `aidlc-docs/` contains prior build logs, extract and apply lessons:
+Super-AIDLC v4 uses a three-layer knowledge system, searched in this order:
 
-1. **Scan ALL build-log summaries first** -- read just the `## Summary` section of every build-log.md (1-2 lines each). This is a quick index scan, not a deep read.
-2. **Select the 3 most relevant logs** -- rank by relevance to the CURRENT task, not by date. A 6-month-old build log about database patterns is more useful than yesterday's CSS fix when building a new API.
-   - Same component or module? High relevance.
-   - Same type of work (API, CLI, UI, infra)? Medium relevance.
-   - Same technology stack? Low-medium relevance.
-   - Unrelated? Skip.
-   - If fewer than 3 are relevant, use what you have (even zero is fine).
-3. **Deep-read the selected logs.** Extract:
-   - "Issues Encountered" -- avoid repeating the same mistakes
-   - "Decisions Made During Build" -- follow established patterns
-   - "Alternatives Considered" -- don't re-evaluate rejected options
-4. **Read `aidlc-docs/patterns.md`** if it exists. This file contains cross-task conventions distilled from prior runs (see below).
-5. **Build a Session Context block** and inject into every builder/reviewer prompt:
+**Layer 1: Conventions** (`aidlc-docs/patterns.md`)
+- Distilled cross-task conventions (50 lines max).
+- Read FIRST by the Researcher. Contains conventions, anti-patterns, stack decisions.
+
+**Layer 2: Structured Solutions** (`aidlc-docs/solutions/`)
+- Structured knowledge base with YAML frontmatter for searchability.
+- Created by `/compound` after solving non-trivial problems.
+- Organized by category: `runtime-issues/`, `patterns/`, `security-issues/`, etc.
+- Searched by module, component, tags. Stale docs deprioritized.
+- Maintained by `/compound-refresh` (Keep/Update/Consolidate/Replace/Delete).
+
+**Layer 3: Build Logs** (`aidlc-docs/*/build-log.md`)
+- Per-session history with summary sections for quick scanning.
+- Select 3 most relevant by task similarity (not recency).
+- Extract: Issues Encountered, Decisions Made, Alternatives Considered.
+
+**Search process:**
+1. Read `aidlc-docs/patterns.md` (Layer 1 -- conventions).
+2. Search `aidlc-docs/solutions/` frontmatter by module/component/tags (Layer 2 -- deep knowledge). Deep-read top 3 matches.
+3. Scan build-log summaries, select 3 most relevant, deep-read (Layer 3 -- session history).
+4. Build a Session Context block and inject into every builder/reviewer prompt:
 
 ```
-## Lessons from Prior Runs
-- {issue from build-log-1}: {how it was resolved}
-- Convention: {pattern established in prior run}
+## Prior Knowledge
+- Solution: [{title}]({path}) -- {1-line summary}
+- Convention: {pattern from patterns.md}
+- Dead end: {approach that failed in prior session}
 - Do NOT revisit: {rejected alternative and why}
 ```
 
-6. If a prior design doc exists for a SIMILAR feature, reference it:
-   "The {prior feature} used {pattern}. Follow the same pattern unless requirements differ."
+5. If a prior design doc exists for a SIMILAR feature, reference it.
+
+### Continue Mode (multi-session iteration)
+
+If the user says "continue" or "pick up where we left off", enter Continue mode:
+
+1. **Find the most recent build log** in `aidlc-docs/` (by date in directory name).
+2. **Read its Summary section** to understand what was last built.
+3. **Check for incomplete work:**
+   - Design doc exists but no build log? → Construction was never started. Resume at construction.
+   - Build log shows "Ship approved: pending"? → Build done, ship not done. Resume at operations.
+   - Build log shows batch delivery? → Check which batches are done. Resume with the next batch.
+4. **Display status:**
+   ```
+   Continuing from: {last session date}
+   Last completed: {what was built}
+   Next step: {what needs to happen}
+
+   Ready to continue? (y/n)
+   ```
+
+This prevents users from having to re-explain context that is already captured in artifacts.
+
+### Version Iteration (v1 → v2)
+
+When the user says "v2" or "next version" or "iterate on this":
+
+1. Read the existing design doc for the feature.
+2. Ask: "What should change in v2?" (not starting from scratch)
+3. Create a NEW design doc: `aidlc-docs/{date}-{feature-slug}-v2/design.md`
+4. Reference the v1 design doc's Decisions Log to avoid re-debating settled decisions.
+5. The v1 build log's "Issues Encountered" section feeds directly into v2's design.
+
+This is how Super-AIDLC handles iterative development without losing institutional knowledge.
+
+### Compound Knowledge Commands (v4)
+
+In addition to the main `/super-aidlc` workflow, two standalone commands manage the knowledge base:
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `/compound` | Extract structured solution from current session | After solving non-trivial bugs, discovering patterns |
+| `/compound-refresh` | Maintain knowledge base quality | After refactors, migrations, periodically |
+
+These are defined in `skills/compound/SKILL.md` and `skills/compound-refresh.md`.
 
 ### Accumulating Project Patterns
 
@@ -168,7 +318,7 @@ If ALL of these are true, skip the confirmation prompt and go straight to constr
 
 Display a brief status line instead:
 ```
-Super-AIDLC | Light | {1-line summary} | Building...
+Super-AIDLC | Light | {language} | {1-line summary} | Building...
 ```
 
 This saves ~30 seconds of round-trip for trivial tasks on projects you already know.
@@ -181,6 +331,7 @@ Super-AIDLC
 Task: {1-line summary}
 Complexity: {Light / Medium / Heavy}
 Workspace: {Greenfield / Brownfield}
+Language: {detected language}
 Plan: {Design -> Build / Build only}
 Ready? (y/n)
 ```
@@ -191,6 +342,7 @@ Wait for confirmation.
 
 **Light**: Read `phases/construction.md` and execute.
 **Medium/Heavy**: Read `phases/inception.md` and execute. It will tell you when to proceed to construction.
+**Heavy with high ambiguity**: If the task description is vague ("build something like...", "I want to improve..."), suggest brainstorm first: "This task has high ambiguity. Want to run a brainstorm phase first to clarify requirements? (y/n)". If yes, read `phases/brainstorm.md` and execute. Its output feeds directly into inception.
 
 ## Interruption Protocol
 
@@ -257,13 +409,15 @@ When the design has multiple independent units:
 
 1. **Load TDD rules into every builder** -- Read `rules/tdd.md` and inject its content into every builder agent's prompt.
 
-2. **Dispatch builders in parallel** -- Use the Agent tool with `isolation: "worktree"` for each unit. Send ALL independent builders in a single message (parallel tool calls). Do NOT build sequentially if units are independent.
+2. **Inject session language into every subagent** -- Add `Session language: {language}` to every builder, reviewer, researcher, and architect prompt. This ensures all artifacts are in the same language.
 
-3. **Dispatch TWO reviewers after each builder** -- First spec-reviewer (`agents/spec-reviewer.md`), then quality-reviewer (`agents/quality-reviewer.md`). Quality review only runs after spec review passes. See `rules/review-protocol.md`.
+3. **Dispatch builders in parallel** -- Use the Agent tool with `isolation: "worktree"` for each unit. Send ALL independent builders in a single message (parallel tool calls). Do NOT build sequentially if units are independent.
 
-4. **Merge results** -- After all units pass both reviews, merge worktrees to main branch.
+4. **Dispatch TWO reviewers after each builder** -- First spec-reviewer (`agents/spec-reviewer.md`), then quality-reviewer (`agents/quality-reviewer.md`). Quality review only runs after spec review passes. See `rules/review-protocol.md`.
 
-5. **Load verification gate before any completion claim** -- Read `guards/verification.md` before claiming anything is done. Evidence before assertions.
+5. **Merge results** -- After all units pass both reviews, merge worktrees to main branch.
+
+6. **Load verification gate before any completion claim** -- Read `guards/verification.md` before claiming anything is done. Evidence before assertions.
 
 This is NOT optional. Parallel dispatch, TDD, and two-stage review are what make this skill different.
 

@@ -61,6 +61,22 @@ Only enter this phase when you have identified the root cause with evidence.
 4. **Run the full test suite.** Confirm no regressions.
 5. **Check for similar patterns.** Search the codebase for the same mistake in other locations. If found, note them in your report (but do not fix them now -- see Scope Lock).
 
+## AI-Specific Failure Modes
+
+When debugging code produced by AI agents, check for these patterns first. These are the most common bugs in AI-generated code based on benchmarks across Superpowers, AIDLC, and gstack:
+
+| Failure Pattern | Symptom | Root Cause | Check |
+|----------------|---------|-----------|-------|
+| Shell injection | Tests pass, prod vulnerable | `exec()` with string interpolation | Grep for `exec\(`, `os.system(`, `Command::new("sh")` |
+| Path traversal | Tests pass, files leaked | `path.join()` without validation | Grep for `path.join` without `startsWith` check |
+| Unbounded buffer | Memory grows over time | No size limit on Map/Array/Buffer | Grep for `new Map()`, `[]` in loops without `.slice()` |
+| Environment leak | Secrets in child processes | `spawn()` inherits parent env | Check `env:` option in process spawning |
+| Missing error handling | Silent failures | AI skipped error path | Compare Error/Rescue Map rows against actual try/catch blocks |
+| Infinite loop in agent | Agent runs forever | Recursive agent dispatch without exit condition | Check for agent-in-agent dispatch patterns |
+| Mock-passing, real-failing | Tests green, integration red | Tests mock too much | Run with real dependencies, compare behavior |
+
+Check these BEFORE doing general debugging. They account for ~80% of AI-generated code bugs.
+
 ## Scope Lock
 
 During investigation you will find other issues. Do NOT fix them.

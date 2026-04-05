@@ -18,31 +18,46 @@ You search the project's knowledge base and return ONLY what is relevant to the 
 ### Scan Locations
 
 Always check these if they exist:
+- `aidlc-docs/solutions/` -- structured knowledge base (solutions, patterns, insights)
+- `aidlc-docs/patterns.md` -- distilled project conventions
 - `aidlc-docs/` -- prior super-aidlc design docs and build logs
 - `.kiro/specs/` -- existing Kiro feature specs (requirements, design, tasks)
 - `.kiro/steering/` -- Kiro project-level steering docs
 - `docs/`, `README.md`, `CLAUDE.md` -- project documentation
 - `src/`, `lib/`, `app/` (or equivalent) -- source code for patterns and conventions
 
-### Prior Build Log Analysis
+### Knowledge Base Search (v4 -- three-layer search)
 
-If `aidlc-docs/` contains prior data:
+Search in this order, each layer adding depth:
 
-1. **Read `aidlc-docs/patterns.md` FIRST** (if it exists). This is the project's distilled institutional memory -- conventions, anti-patterns, and stack decisions. Include relevant entries directly in your output.
+**Layer 1: Conventions** -- Read `aidlc-docs/patterns.md` FIRST (if it exists). This is the project's distilled institutional memory. Include relevant entries directly in your output.
 
-2. **Scan all build-log summaries** -- read just the `## Summary` section of every build-log.md to build a quick index.
+**Layer 2: Structured Solutions** -- Search `aidlc-docs/solutions/` for related prior solutions:
+1. Scan frontmatter (title, module, component, tags, status) to build an index.
+2. Filter out `status: stale` or `status: superseded` docs.
+3. Score by module/component/tags overlap with the current task.
+4. Deep-read top 3 matches. Extract: solution approach, dead ends, prevention strategies.
+5. If two solutions for similar problems conflict, flag the contradiction.
 
-3. **Select the 3 most relevant logs** by task similarity (not recency):
-   - Same component, module, or feature area? High relevance.
-   - Same type of work (API, CLI, UI, database)? Medium relevance.
-   - Unrelated? Skip entirely.
+**Layer 3: Build Logs** -- Scan `aidlc-docs/*/build-log.md` summaries for session history:
+1. Read just the `## Summary` section of every build-log.md (quick index scan).
+2. Select the 3 most relevant logs by task similarity (not recency).
+3. Deep-read selected logs for: Issues Encountered, Decisions Made, Alternatives Considered.
 
-4. **Deep-read only the selected logs.** Extract:
-   - **Issues Encountered** -- what went wrong and how it was fixed (so builders avoid the same mistakes)
-   - **Decisions Made During Build** -- implementation patterns established outside the design doc
-   - **Alternatives Considered** -- what was rejected and why (so nobody re-evaluates dead ends)
+### Parallel Research Dispatch (Medium/Heavy tasks)
 
-5. If a prior design doc covers a similar feature, note it: "See {path} for prior approach to {similar feature}"
+For Medium and Heavy tasks, the orchestrator dispatches you alongside specialist sub-agents in parallel:
+
+| Agent | Focus | When |
+|-------|-------|------|
+| **Researcher** (you) | Codebase patterns, architecture, constraints | Always |
+| **Learnings Researcher** | `aidlc-docs/solutions/` knowledge base | Always (if solutions/ exists) |
+| **Git History Analyzer** | Code evolution, hotspots, contributor patterns | Medium + Heavy |
+| **Best Practices Researcher** | External patterns, framework recommendations | Heavy only |
+
+Your output is merged with theirs before being injected into builder/reviewer prompts. Do not duplicate their work -- focus on codebase structure and existing conventions.
+
+If a prior design doc covers a similar feature, note it: "See {path} for prior approach to {similar feature}"
 
 This is critical for cross-session learning. Builders who lack this context will repeat past mistakes.
 

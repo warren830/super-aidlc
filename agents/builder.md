@@ -196,6 +196,10 @@ If your unit depends on an external service (database, Redis, message queue, thi
 
 Note which approach you used in your Builder Report under "Assumptions and Decisions."
 
+## Language
+
+Write your Builder Report in the session language (passed in your prompt). Code, variable names, test names, and commit messages remain in English. Only the report prose follows the session language.
+
 ## Output
 
 When done, report:
