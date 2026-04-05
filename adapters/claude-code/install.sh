@@ -69,6 +69,26 @@ if [ "$VERIFY_ONLY" = true ]; then
   check_link "extensions" "$SCRIPT_DIR/extensions"
   check_link "skills" "$SCRIPT_DIR/skills"
 
+  # Check sub-skill registration at top level
+  if [ "$GLOBAL_INSTALL" = true ]; then
+    VERIFY_SKILLS_ROOT="$HOME/.claude/skills"
+  else
+    VERIFY_SKILLS_ROOT="$PROJECT_ROOT/.claude/skills"
+  fi
+
+  echo "  Sub-skills:"
+  for sub_skill_dir in "$SCRIPT_DIR"/skills/*/; do
+    [ -f "$sub_skill_dir/SKILL.md" ] || continue
+    sub_name=$(basename "$sub_skill_dir")
+    link_path="$VERIFY_SKILLS_ROOT/super-aidlc-${sub_name}"
+    if [ -L "$link_path" ] && [ -e "$link_path/SKILL.md" ]; then
+      echo "    OK  super-aidlc:${sub_name}"
+    else
+      echo "    MISSING  super-aidlc:${sub_name}"
+      HEALTHY=false
+    fi
+  done
+
   if [ "$HEALTHY" = true ]; then
     echo "Installation healthy (v$VERSION)"
     exit 0
@@ -98,10 +118,17 @@ else
   echo "Installing super-aidlc v$VERSION"
 fi
 
+# Determine the parent skills directory
+if [ "$GLOBAL_INSTALL" = true ]; then
+  SKILLS_ROOT="$HOME/.claude/skills"
+else
+  SKILLS_ROOT="$PROJECT_ROOT/.claude/skills"
+fi
+
 # Create target directory
 mkdir -p "$SKILL_DIR"
 
-# Create symlinks
+# Create core symlinks (internal references)
 ln -sf "$SCRIPT_DIR/SKILL.md" "$SKILL_DIR/SKILL.md"
 ln -sf "$SCRIPT_DIR/phases" "$SKILL_DIR/phases"
 ln -sf "$SCRIPT_DIR/agents" "$SKILL_DIR/agents"
@@ -110,11 +137,25 @@ ln -sf "$SCRIPT_DIR/rules" "$SKILL_DIR/rules"
 ln -sf "$SCRIPT_DIR/extensions" "$SKILL_DIR/extensions"
 ln -sf "$SCRIPT_DIR/skills" "$SKILL_DIR/skills"
 
+# Register sub-skills at top level so Claude Code can discover them.
+# Claude Code only scans ~/.claude/skills/*/SKILL.md (one level deep).
+# Sub-skills at super-aidlc/skills/*/SKILL.md are two levels deep and invisible.
+# Fix: symlink each sub-skill directory to the top-level skills/ directory.
+SUB_SKILL_COUNT=0
+for sub_skill_dir in "$SCRIPT_DIR"/skills/*/; do
+  [ -f "$sub_skill_dir/SKILL.md" ] || continue
+  sub_skill_name=$(basename "$sub_skill_dir")
+  link_name="super-aidlc-${sub_skill_name}"
+  ln -sf "$sub_skill_dir" "$SKILLS_ROOT/$link_name"
+  SUB_SKILL_COUNT=$((SUB_SKILL_COUNT + 1))
+done
+
 if [ "$GLOBAL_INSTALL" = true ]; then
   echo "Installed super-aidlc v$VERSION globally to $SKILL_DIR"
 else
   echo "Installed super-aidlc v$VERSION to $SKILL_DIR"
 fi
+echo "Registered $SUB_SKILL_COUNT sub-skills (super-aidlc:*)"
 echo "Symlinks point to $SCRIPT_DIR"
 echo "Run 'git pull' in $SCRIPT_DIR to update all projects."
 echo "Run './install.sh --verify' to check installation health."
