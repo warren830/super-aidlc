@@ -81,30 +81,32 @@ Super-AIDLC 是唯一产出零已知安全漏洞代码的方案。多花的时�
 ```bash
 git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 
-# Claude Code
+# Claude Code（全局 -- 所有项目可用）
+~/super-aidlc/adapters/claude-code/install.sh --global
+
+# Claude Code（单个项目）
 ~/super-aidlc/adapters/claude-code/install.sh /path/to/your/project
 
 # Kiro
 ~/super-aidlc/adapters/kiro/install.sh /path/to/your/project
 
-# OpenAI Codex CLI
-~/super-aidlc/adapters/codex/install.sh /path/to/your/project
-
-# Gemini CLI
-~/super-aidlc/adapters/gemini-cli/install.sh /path/to/your/project
-
-# Windows (PowerShell)
-.\adapters\claude-code\install.ps1 -ProjectRoot C:\path\to\project
-
-# 全局安装（所有项目生效）
-~/super-aidlc/adapters/claude-code/install.sh --global
-
 # 验证安装
-~/super-aidlc/adapters/claude-code/install.sh --verify
-
-# 卸载
-~/super-aidlc/adapters/claude-code/uninstall.sh /path/to/your/project
+~/super-aidlc/adapters/claude-code/install.sh --verify --global
 ```
+
+## 命令列表
+
+| 命令 | 用途 |
+|------|------|
+| `/super-aidlc [任务]` | 完整流程 -- 自动路由 Light/Medium/Heavy |
+| `/super-aidlc:brainstorm [想法]` | 设计前探索需求 |
+| `/super-aidlc:design [任务]` | 只做设计（出设计文档，不写代码）|
+| `/super-aidlc:review [范围]` | 两阶段审查 + 并行专项 reviewer |
+| `/super-aidlc:debug [bug]` | 系统化根因调查 |
+| `/super-aidlc:qa [url]` | 浏览器 / API / CLI QA 测试 |
+| `/super-aidlc:ship [分支]` | 验证 + 提交 + 推送 + PR |
+| `/super-aidlc:compound [上下文]` | 提取知识到 `aidlc-docs/solutions/` |
+| `/super-aidlc:compound-refresh [范围]` | 维护知识库质量 |
 
 然后：`/super-aidlc [描述你要构建的东西]`
 
@@ -177,8 +179,14 @@ super-aidlc/
     qa.md                           # 浏览器 QA（Playwright，可选）
     debugger.md                     # 根因调查
   skills/
-    compound/SKILL.md               # 会话后知识提取（v4）
-    compound-refresh.md             # 知识库维护（v4）
+    brainstorm/SKILL.md             # /super-aidlc:brainstorm
+    design/SKILL.md                 # /super-aidlc:design
+    review/SKILL.md                 # /super-aidlc:review
+    debug/SKILL.md                  # /super-aidlc:debug
+    qa/SKILL.md                     # /super-aidlc:qa
+    ship/SKILL.md                   # /super-aidlc:ship
+    compound/SKILL.md               # /super-aidlc:compound
+    compound-refresh/SKILL.md       # /super-aidlc:compound-refresh
   guards/
     careful.md                      # 破坏性命令拦截
     freeze.md                       # 编辑范围锁定

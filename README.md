@@ -48,17 +48,36 @@ Eleven capabilities no other AI workflow has:
 ## Quick Start
 
 ```bash
-# Kiro
 git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
+
+# Claude Code (global -- all projects)
+~/super-aidlc/adapters/claude-code/install.sh --global
+
+# Claude Code (single project)
+~/super-aidlc/adapters/claude-code/install.sh /path/to/your/project
+
+# Kiro
 ~/super-aidlc/adapters/kiro/install.sh /path/to/your/project
 
-# Claude Code
-~/super-aidlc/adapters/claude-code/install.sh /path/to/your/project
+# Verify installation
+~/super-aidlc/adapters/claude-code/install.sh --verify --global
 ```
 
-Then: `/super-aidlc [describe what you want to build]`
-
 Symlink-based install -- `git pull` updates all projects.
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/super-aidlc [task]` | Full pipeline -- auto-routes Light/Medium/Heavy |
+| `/super-aidlc:brainstorm [idea]` | Explore requirements before design |
+| `/super-aidlc:design [task]` | Run inception only (design doc, no code) |
+| `/super-aidlc:review [scope]` | Two-stage review with parallel specialist reviewers |
+| `/super-aidlc:debug [bug]` | Systematic root-cause investigation |
+| `/super-aidlc:qa [url]` | Browser / API / CLI QA testing |
+| `/super-aidlc:ship [branch]` | Verification + commit + push + PR |
+| `/super-aidlc:compound [context]` | Extract knowledge into `aidlc-docs/solutions/` |
+| `/super-aidlc:compound-refresh [scope]` | Maintain knowledge base quality |
 
 ## How It Works
 
@@ -126,8 +145,14 @@ super-aidlc/
     qa.md                           # Browser QA (Playwright, optional)
     debugger.md                     # Root-cause investigation
   skills/
-    compound/SKILL.md               # Knowledge extraction after sessions (v4)
-    compound-refresh.md             # Knowledge base maintenance (v4)
+    brainstorm/SKILL.md             # /super-aidlc:brainstorm
+    design/SKILL.md                 # /super-aidlc:design
+    review/SKILL.md                 # /super-aidlc:review
+    debug/SKILL.md                  # /super-aidlc:debug
+    qa/SKILL.md                     # /super-aidlc:qa
+    ship/SKILL.md                   # /super-aidlc:ship
+    compound/SKILL.md               # /super-aidlc:compound
+    compound-refresh/SKILL.md       # /super-aidlc:compound-refresh
   guards/
     careful.md                      # Destructive command interception
     freeze.md                       # Edit scope lock
