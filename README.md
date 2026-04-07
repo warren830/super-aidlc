@@ -23,7 +23,7 @@ Super-AIDLC is the only approach that produces code with zero known security vul
 
 Eleven capabilities no other AI workflow has:
 
-**1. True Parallel Multi-Agent Builds** -- Independent units dispatch simultaneously to isolated worktrees. 5 units build in 1 round, not 5. Includes conflict resolution, timeout handling, and shared utility deduplication.
+**1. Three-Strategy Subagent Builds** -- Auto-selects Inline (1-2 units, no overhead), Serial (dependent units, with knowledge injection between them), or Parallel (independent units in worktrees). Parallel uses worktree-first with background-fallback when worktrees fail. Per-unit self-check, real-time task tracking, and conflict resolution with automatic retry.
 
 **2. Cross-Session Learning** -- Selects prior build logs by task relevance (not just recency). Accumulates project patterns in `aidlc-docs/patterns.md`. Each run teaches the next.
 

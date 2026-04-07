@@ -44,7 +44,7 @@ Super-AIDLC 是唯一产出零已知安全漏洞代码的方案。多花的时�
 
 ## 16 个独有能力
 
-**1. 真正的多 Agent 并行构建** -- 独立单元同时 dispatch 到隔离 worktree。5 个单元构建 1 轮，不是 5 轮。含冲突处理、超时机制和共享工具去重。
+**1. 三策略 Subagent 构建** -- 自动选择 Inline（1-2 单元，零开销）、Serial（有依赖单元，附带知识注入）、或 Parallel（独立单元用 worktree）。Parallel 模式 worktree 优先、background fallback。每单元自检、实时任务追踪、冲突自动重试。
 
 **2. 跨会话学习** -- 按任务相关性（而非时间）选择历史构建日志。在 `aidlc-docs/patterns.md` 中累积项目模式。每次运行让下次更聪明。
 

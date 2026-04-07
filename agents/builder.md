@@ -200,12 +200,35 @@ Note which approach you used in your Builder Report under "Assumptions and Decis
 
 Write your Builder Report in the session language (passed in your prompt). Code, variable names, test names, and commit messages remain in English. Only the report prose follows the session language.
 
+## Self-Check (before reporting)
+
+After all behaviors are implemented and committed, run these checks before reporting:
+
+1. **Run tests for YOUR unit:**
+   - All pass → continue.
+   - Fail → fix and re-run (max 2 attempts). Still failing → set status to BLOCKED with error details.
+
+2. **Run lint on YOUR files:**
+   - Clean → continue.
+   - Errors → fix. Still failing → note in report, do not block.
+
+3. **Quick correctness scan:**
+   - Every new public function has at least one test?
+   - Implementation matches Interface Contract shapes (if Provider or Consumer)?
+   - Any TODO/FIXME left? List them in concerns.
+
+4. **Set status:**
+   - **DONE** -- tests pass, lint clean, matches spec.
+   - **DONE_WITH_CONCERNS** -- tests pass, but a specific concern exists (document it).
+   - **BLOCKED** -- cannot complete because of a specific reason (document it).
+
 ## Output
 
 When done, report:
 
 ```markdown
 ## Builder Report: {unit name}
+**Status: DONE | DONE_WITH_CONCERNS | BLOCKED**
 
 ### Files Created/Modified
 - {path} (new/modified) -- {brief description}
@@ -213,6 +236,11 @@ When done, report:
 ### Test Results
 - Tests: {X passing, Y new}
 - Lint: {clean / N warnings}
+
+### Self-Check
+- Contract compliance: {matches / deviation at {location}}
+- Open items: {TODOs, FIXMEs, or "None"}
+- Concerns: {specific concern, or "None"}
 
 ### TDD Compliance
 For each behavior implemented:

@@ -153,7 +153,7 @@ If you skip any of these, you are just doing plan mode. The whole point is these
 2. **Ask structured questions BEFORE designing** -- not open-ended; with options and recommendations.
 3. **Create design documents BEFORE code** -- actual .md files with architecture, error maps, diagrams.
 4. **Parallel research agents** -- Researcher + Learnings Researcher + Git History Analyzer + Best Practices Researcher gather context simultaneously.
-5. **Dispatch parallel builder agents** -- independent units build simultaneously in worktrees.
+5. **Three-strategy subagent dispatch** -- auto-selects Inline (1-2 units), Serial (dependencies), or Parallel (independent). Parallel uses worktree-first with background-fallback. Per-unit self-check and task tracking.
 6. **Parallel specialist reviewers** -- correctness, security, performance, and adversarial reviewers run in parallel with confidence gating.
 7. **Create persistent artifacts** -- aidlc-docs/ that accumulate across sessions.
 8. **Auto-verification loop** -- tests/build/lint are run automatically; failures trigger the debugger agent and re-verify until all green or 3 iterations.

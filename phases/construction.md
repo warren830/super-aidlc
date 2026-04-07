@@ -100,48 +100,87 @@ Skip for greenfield projects.
 
 Before dispatching ANY builder, read `rules/tdd.md` and inject its full content into every builder agent's prompt. TDD is not optional.
 
-### If design has multiple independent units -- DISPATCH IN PARALLEL:
+### Strategy Selection (auto)
 
-For each independent unit, dispatch a Builder Agent using the Agent tool:
+At the start of Step 3, select an execution strategy based on the design doc's Units of Work:
+
+| Condition | Strategy | When |
+|-----------|----------|------|
+| units <= 2 AND total files <= 4 | **INLINE** | Trivial tasks, no agent overhead needed |
+| units have dependencies OR shared file paths | **SERIAL** | Units depend on each other or touch same files |
+| all units independent, no file overlap | **PARALLEL** | Maximum speed for independent units |
+
+**File overlap detection** (critical for PARALLEL): Before selecting PARALLEL, scan each unit's file list from the design doc. If ANY two units list the same file path, downgrade to SERIAL. Conflict prevention is cheaper than conflict resolution.
+
+Display to user:
+```
+Strategy: {INLINE|SERIAL|PARALLEL} ({N} units, {reason})
+```
+
+### Task Tracking (SERIAL and PARALLEL only)
+
+Before dispatching builders, create a task for each unit:
+```
+TaskCreate(subject: "Build: {unit name}", description: "{unit description}", activeForm: "Building {unit name}")
+```
+
+If units have dependencies:
+```
+TaskUpdate(taskId: "{U2-id}", addBlockedBy: ["{U1-id}"])
+```
+
+Update tasks as builders progress:
+- Dispatched → `TaskUpdate(status: "in_progress")`
+- DONE → `TaskUpdate(status: "completed")`
+- DONE_WITH_CONCERNS → `TaskUpdate(status: "completed", description: "Concerns: {list}")`
+- BLOCKED → leave in_progress, update description with block reason
+
+### INLINE Mode
+
+For trivial 1-2 unit tasks with few files. The orchestrator builds directly:
+
+1. Follow TDD rules from `rules/tdd.md` inline (no Agent() calls).
+2. Write failing test → minimal implementation → verify → refactor.
+3. Run tests + lint when done.
+4. No task tracking overhead.
+
+### SERIAL Mode (with Knowledge Injection)
+
+One Agent() per unit, dispatched sequentially. Each agent works on the current branch.
 
 ```
 Agent(
-  prompt: "<paste agents/builder.md content here>
-
-  --- TDD Rules (mandatory) ---
-  <paste rules/tdd.md content here>
-
-  --- Context ---
-  Project context: <CLAUDE.md or Researcher summary>
-  Unit to build: <unit name and description from design doc>
-  Design doc: <relevant section of design doc>
-  Error/Rescue Map: <relevant rows where this unit is Owner>
-  Interface Contracts: <rows where this unit is Provider or Consumer -- follow these exactly>
-
-  Build this unit following TDD: write failing test first, then minimal
-  implementation, verify at each step. Run tests and lint before finishing.
-  If this unit is a Provider in the Interface Contracts table, your implementation
-  MUST match the contract signature and return shape exactly.
-  If this unit is a Consumer, code against the contract shape (mock the Provider if needed).",
-
-  isolation: "worktree",
+  prompt: "<agents/builder.md> + <rules/tdd.md> + {unit spec} + {accumulated context}",
   description: "Build unit: {name}"
 )
 ```
 
-### Parallel Dispatch Protocol
+After each unit completes, inject THREE sources of accumulated context into the next builder:
 
-When the design doc marks N units as independent (Can Parallel? = Yes):
+```
+## Accumulated Context from Prior Units
 
-1. Read ALL builder prompts in advance
-2. Send ALL N Agent() calls in a SINGLE message -- this is what makes them parallel
-3. Each builder gets: isolation: "worktree", its own unit spec, TDD rules, project context
-4. DO NOT await one builder before dispatching the next
-5. After ALL builders complete, collect results and proceed to review
+### From Unit {N}'s Builder Report:
+- Assumptions: {extracted from report}
+- Interfaces created: {function signatures, types, API shapes}
+- Decisions: {why they chose approach X over Y}
 
-Example for 3 parallel units:
+### From Unit {N}'s Self-Check:
+- Test patterns: {e.g., "vitest with in-memory SQLite"}
+- Files created: {exact paths the next builder can import}
 
-In a SINGLE message, send these three tool calls:
+### From Integration Results (if prior units merged):
+- Issues found: {post-merge failures and resolutions}
+- Shared utilities available: {paths to helpers}
+```
+
+This prevents the "subagent amnesia" problem where each agent starts fresh.
+
+### PARALLEL Mode (with Worktree-First Fallback)
+
+All agents dispatched in a SINGLE message for true parallelism.
+
+**Phase 1: Worktree dispatch (preferred)**
 
 ```
 Agent(prompt: "...", isolation: "worktree", description: "Build unit: U1")
@@ -149,13 +188,48 @@ Agent(prompt: "...", isolation: "worktree", description: "Build unit: U2")
 Agent(prompt: "...", isolation: "worktree", description: "Build unit: U3")
 ```
 
-This is NOT the same as running them sequentially. The Agent tool runs all three
-simultaneously when they appear in the same message. This is Super-AIDLC's key
-speed advantage on Heavy tasks.
+All three run simultaneously. This is Super-AIDLC's key speed advantage.
+
+**Phase 2: Detect worktree failure**
+
+If ANY agent fails with a worktree error (hook blocked creation, permission denied, `.git/worktrees` error), treat ALL agents as failed. All-or-nothing -- mixing isolation modes creates merge complexity.
+
+**Phase 3: Background fallback (redispatch)**
+
+Redispatch ALL agents in one message with `run_in_background: true` and explicit file boundaries:
+
+```
+Agent(
+  prompt: "... 
+  ## File Boundary (STRICT -- non-isolated parallel mode)
+  You may ONLY create or modify these files:
+  - {file list from design doc for this unit}
+  Do NOT touch any file outside this list. Other builders are working simultaneously.",
+  run_in_background: true,
+  description: "Build unit: {name}"
+)
+```
+
+File lists come from the design doc. Strategy selection already verified no overlap.
+
+**Builder prompt template** (both worktree and background modes):
+
+```
+Agent(
+  prompt: "<agents/builder.md content>
+  --- TDD Rules (mandatory) ---
+  <rules/tdd.md content>
+  --- Context ---
+  Project context: <CLAUDE.md or Researcher summary>
+  Unit to build: <unit spec from design doc>
+  Error/Rescue Map: <rows where this unit is Owner>
+  Interface Contracts: <rows where this unit is Provider or Consumer>
+  {File Boundary section if background fallback mode}",
+  description: "Build unit: {name}"
+)
+```
 
 ### Builder Timeout
-
-When dispatching parallel builders, expect these approximate completion times:
 
 | Unit Size | Expected Time | Concern Threshold |
 |-----------|--------------|-------------------|
@@ -163,88 +237,62 @@ When dispatching parallel builders, expect these approximate completion times:
 | Medium (3-5 files) | 5-10 min | > 20 min |
 | Large (6+ files) | 10-20 min | > 30 min |
 
-If a builder significantly exceeds the concern threshold while others have finished:
-1. Do NOT wait indefinitely. Proceed with review and merge for completed builders.
-2. Check the stalled builder's last output for signs of an infinite loop, blocked resource, or scope creep.
-3. Report to the user: "Builder for {unit} is taking longer than expected. Other units are ready. Options: (A) Keep waiting (B) Cancel and investigate."
+If a builder exceeds threshold while others have finished:
+1. Do NOT wait indefinitely. Proceed with completed builders.
+2. Report: "Builder for {unit} is taking longer than expected. Options: (A) Keep waiting (B) Cancel."
 
-After all builders complete (or stalled builders are resolved), check results. If any failed, fix and retry (max 2 attempts, then escalate to user with diagnosis).
+### Status Aggregation
 
-### Merge Protocol for Worktree Results
+After all builders complete, display aggregated status:
 
-After all parallel builders complete:
-1. Check each builder's report for PASS/FAIL
-2. If any FAIL: fix in the failed worktree, do NOT restart others
-3. When all PASS: merge each worktree branch to main sequentially (see Conflict Resolution below)
-4. After merge: verify interface contracts (see Step 3b)
-5. Run full test suite to catch integration issues
-6. If integration tests fail: use agents/debugger.md to investigate
+```
+Build Status:
+  U1 (auth-service):    DONE                    [2 min]
+  U2 (api-routes):      DONE_WITH_CONCERNS      [4 min]
+    → response shape differs from contract for GET /users
+  U3 (data-layer):      DONE                    [3 min]
+  U4 (worker):          BLOCKED                 [1 min]
+    → needs queue config created by U3
+```
 
-### Conflict Resolution
+Handle each status:
+- **DONE** → proceed to merge/review.
+- **DONE_WITH_CONCERNS** → pass concern text to spec reviewer context for explicit attention.
+- **BLOCKED** → if blocked by another unit's output, redispatch with missing context. If blocked by environment issue, escalate to user.
 
-When merging worktree branches, conflicts WILL happen (e.g., two builders both add exports to an index file, both add routes to a router, both extend a shared type).
+### Merge Protocol (PARALLEL worktree mode only)
 
-For each merge:
+After all parallel builders complete with DONE/DONE_WITH_CONCERNS:
 
+For each worktree branch:
 ```
 1. git merge --no-commit {worktree-branch}
-2. If clean merge: git commit and continue to next branch
+2. If clean merge: git commit, update task, continue
 3. If conflicts:
-   a. Read each conflicted file
-   b. Check the design doc's Interface Contracts table for the intended shape
-   c. Resolve by combining both builders' contributions:
-      - Import/export lists: merge both sets
-      - Type definitions: union both sets of fields
-      - Router/handler registrations: include both
-      - Logic conflicts (two builders changed the same function):
-        escalate to user with both versions and the design doc context
-   d. After resolving: run the FULL test suite (not just the conflicting unit's tests)
-   e. If tests fail after resolution: dispatch debugger agent
-   f. If the conflict involved logic changes (not just additive merges):
-      re-run quality review on the conflicted files only
-4. Continue to next branch
+   a. Classify: additive (both add lines) vs semantic (both change same logic)
+   b. Auto-resolve additive conflicts (keep both sides)
+   c. Run full test suite
+   d. If tests pass: commit, continue
+   e. If tests fail OR semantic conflicts:
+      - Dispatch debugger agent with both versions + Interface Contract
+      - If debugger resolves: commit, continue
+      - If debugger fails: escalate to user
+4. Max 2 attempts per branch (1 auto + 1 debugger-assisted)
 ```
 
-**Additive conflicts** (both sides add lines to the same region) are safe to auto-resolve by keeping both. **Semantic conflicts** (both sides change the same logic) require user input -- do not guess.
+For **background fallback mode**: no merge step needed (same branch). Run full test suite directly.
 
-After ALL branches are merged, run the full test suite once more as a final integration check.
+After ALL branches merged, run full test suite as final integration check.
 
 ### Shared Utility Deduplication
 
-After merging all worktrees, check for duplicate utilities:
+After merging, check for duplicate utilities:
 
-1. Scan new files for similar helper functions (e.g., two units both created a `validatePath()` or `formatError()` helper).
-2. If duplicates are found:
-   a. Keep the more complete or better-tested version.
-   b. Update the other unit's imports to point to the shared version.
-   c. Delete the duplicate.
-   d. Re-run tests to confirm.
-3. If no duplicates: skip this step.
+1. Scan new files for similar helpers (e.g., two units both created `validatePath()`).
+2. Keep the more complete version, update imports, delete duplicate, re-run tests.
+3. If no duplicates: skip.
 
-This is a quick post-merge cleanup, not a refactoring session. Only deduplicate obvious duplicates -- functions with the same purpose and similar signatures. Do not merge functions that happen to look similar but serve different domains.
-
-### Knowledge Transfer Between Sequential Builders
-
-Superpowers' community found that each subagent starts fresh -- knowledge from Task 9 is invisible to Task 10 (issue #601). For sequential units (not parallel), transfer accumulated discoveries:
-
-When Unit N completes before Unit N+1 starts:
-1. Extract from Unit N's builder report:
-   - "Assumptions and Decisions" section
-   - Any discovered constraints or patterns
-   - Any interface details that affect downstream units
-2. Inject into Unit N+1's builder prompt:
-   ```
-   ## Discoveries from Prior Units
-   - Unit {N} found: {discovery}
-   - Unit {N} decided: {decision and why}
-   - Unit {N} created interface: {details}
-   ```
-
-For parallel units, this does not apply -- parallel builders run simultaneously and cannot share discoveries. Post-merge integration handles cross-unit issues.
-
-### If only one unit or sequential dependencies -- build directly:
-
-Follow TDD: write failing tests first, then implementation, then run tests + lint.
+Quick post-merge cleanup only. Do not refactor unrelated code.
 
 ## Step 3b: Interface Contract Verification
 
