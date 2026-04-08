@@ -249,6 +249,7 @@ In addition to the main `/super-aidlc` workflow, two standalone commands manage 
 |---------|---------|-------------|
 | `/super-aidlc:compound` | Extract structured solution from current session | After solving non-trivial bugs, discovering patterns |
 | `/super-aidlc:compound-refresh` | Maintain knowledge base quality | After refactors, migrations, periodically |
+| `/super-aidlc:janitor` | Auto-scan and compound unprocessed sessions | Daily/weekly knowledge hygiene |
 
 These are defined in `skills/compound/SKILL.md` and `skills/compound-refresh.md`.
 

@@ -107,6 +107,7 @@ git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 | `/super-aidlc:ship [分支]` | 验证 + 提交 + 推送 + PR |
 | `/super-aidlc:compound [上下文]` | 提取知识到 `aidlc-docs/solutions/` |
 | `/super-aidlc:compound-refresh [范围]` | 维护知识库质量 |
+| `/super-aidlc:janitor [--days=N]` | 自动扫描历史 session，compound 有价值的 |
 
 然后：`/super-aidlc [描述你要构建的东西]`
 

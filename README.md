@@ -78,6 +78,7 @@ Symlink-based install -- `git pull` updates all projects.
 | `/super-aidlc:ship [branch]` | Verification + commit + push + PR |
 | `/super-aidlc:compound [context]` | Extract knowledge into `aidlc-docs/solutions/` |
 | `/super-aidlc:compound-refresh [scope]` | Maintain knowledge base quality |
+| `/super-aidlc:janitor [--days=N]` | Auto-scan past sessions, compound the valuable ones |
 
 ## How It Works
 

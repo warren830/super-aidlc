@@ -541,25 +541,27 @@ These feed back into the design doc or CLAUDE.md for next time.}
 
 This log is for future reference -- next time super-aidlc runs on this project, it reads prior logs to understand conventions and avoid repeating mistakes.
 
-## Step 9: Compound Knowledge Extraction (optional)
+## Step 9: Auto-Compound Evaluation
 
-After recording the build log, evaluate whether this session produced knowledge worth compounding:
+After recording the build log, automatically evaluate whether this session is worth compounding. Score on 4 signals:
 
-**Suggest `/super-aidlc:compound` when:**
-- The build encountered and solved a non-trivial bug
-- The debugger agent was invoked during auto-verification (something unexpected happened)
-- A novel pattern was established that future sessions should know about
-- An architectural decision was made with non-obvious tradeoffs
+| Signal | Points | How to Detect |
+|--------|--------|--------------|
+| Debugger invoked | +3 | Step 6 dispatched debugger agent (Issues Encountered is non-empty) |
+| Multiple verification iterations | +2 | Step 6 ran > 1 iteration |
+| New conventions established | +2 | Step 8 build log "Decisions Made" is non-empty |
+| Architectural decisions | +1 | Design doc "Alternatives Considered" has entries |
 
-**Do NOT suggest when:**
-- The build was clean (no issues, no surprises)
-- Light complexity task with no new insights
-- Pure config/docs changes
+**Act on score:**
 
-Display:
-```
-This session resolved {N} issues and established {N} new patterns.
-Run /compound to document these for future sessions? (y/n)
-```
+| Score | Action |
+|-------|--------|
+| **>= 3** | Auto-compound: run compound extraction immediately, no prompt |
+| **1-2** | Suggest: "This session scored {N} -- worth compounding? (y/n)" |
+| **0** | Skip silently. Display: "Clean build, no knowledge to compound." |
 
-If the user declines, skip. The knowledge lives in the build log either way -- `/super-aidlc:compound` just makes it structured and searchable.
+**Auto-compound runs the same 3-agent extraction as `/super-aidlc:compound`:** Context Analyzer + Solution Extractor + Related Docs Finder → write to `aidlc-docs/solutions/{category}/`.
+
+For sessions that score 0, knowledge still lives in the build log and patterns.md. Compound just makes it structured and searchable for the Researcher in future sessions.
+
+The standalone `/super-aidlc:janitor` command can retroactively scan past sessions that were missed.
