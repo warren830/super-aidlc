@@ -161,18 +161,40 @@ For smaller insights that don't need full parallel research:
 3. Still writes to `aidlc-docs/solutions/` with proper frontmatter
 4. No overlap check, no refresh trigger
 
+## Phase 4: Global Knowledge Sharing (optional)
+
+After writing the project-local solution doc, evaluate whether it's useful across projects:
+
+**Promote to global when:**
+- The solution is language/framework-generic (e.g., "git worktree hook workaround")
+- The pattern applies to any project using the same tool (e.g., "vitest mock cleanup")
+- The bug is in a shared dependency, not project-specific code
+
+**Keep local when:**
+- The solution references project-specific files, schemas, or architecture
+- The pattern only makes sense in this project's context
+
+**If promoting:**
+1. Copy the solution doc to `~/.aidlc/global-solutions/{category}/`
+2. Strip project-specific file paths and replace with generic descriptions
+3. Add `scope: global` to the YAML frontmatter
+4. Add `source_project: {project name}` to track origin
+
+**If not promoting:** skip silently. Most solutions are project-specific.
+
+The Researcher searches global-solutions AFTER project-local solutions (Layer 2b):
+- Project-local solutions take priority (more relevant)
+- Global solutions fill gaps when no local match exists
+
 ## Integration with Super-AIDLC
 
-The Construction phase (Step 8: Record build log) should suggest running `/super-aidlc:compound` when:
-- The build encountered and solved a non-trivial bug
-- The debugger agent was invoked during auto-verification
-- A novel pattern was established that future sessions should know about
+The Construction phase Step 9 auto-evaluates compound score and runs extraction for high-value sessions. The `/super-aidlc:janitor` command retroactively scans missed sessions.
 
-The Researcher agent reads `aidlc-docs/solutions/` BEFORE reading build logs:
-1. Read `aidlc-docs/patterns.md` (conventions)
-2. Search `aidlc-docs/solutions/` by module/component/tags (structured knowledge)
-3. Scan build-log summaries (session history)
-4. Select 3 most relevant logs for deep read
+The Researcher agent search order:
+1. `aidlc-docs/patterns.md` (Layer 1 -- project conventions)
+2. `aidlc-docs/solutions/` (Layer 2 -- project knowledge)
+3. `~/.aidlc/global-solutions/` (Layer 2b -- cross-project knowledge)
+4. Build-log summaries (Layer 3 -- session history)
 
 ## Language
 

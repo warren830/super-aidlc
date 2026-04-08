@@ -537,9 +537,26 @@ See design doc for architecture/storage alternatives. Add any NEW alternatives d
 ## Decisions Made During Build
 {Any implementation decisions not in the design doc.
 These feed back into the design doc or CLAUDE.md for next time.}
+
+## Metrics
+- Complexity: {Light / Medium / Heavy}
+- Strategy: {INLINE / SERIAL / PARALLEL}
+- Total time: {seconds}
+- Inception time: {seconds}
+- Build time: {seconds}
+- Review time: {seconds}
+- Verify iterations: {count}
+- Test count: {count}
+- Test coverage: {percent or "N/A"}
+- Issues encountered: {count}
+- Decisions made: {count}
+- Reviewer findings: {P0: N, P1: N, P2: N, P3: N}
+- Security vulns: {count}
+- Compound score: {0-9}
+- Compound action: {auto / suggested / skipped}
 ```
 
-This log is for future reference -- next time super-aidlc runs on this project, it reads prior logs to understand conventions and avoid repeating mistakes.
+This log is for future reference -- next time super-aidlc runs on this project, it reads prior logs to understand conventions and avoid repeating mistakes. The Metrics section is structured for `/super-aidlc:metrics` trend analysis.
 
 ## Step 9: Auto-Compound Evaluation
 

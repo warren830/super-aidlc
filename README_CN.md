@@ -70,7 +70,7 @@ Super-AIDLC 是唯一产出零已知安全漏洞代码的方案。多花的时�
 
 **13. 多语言文档生成** -- 所有生成的文档（设计文档、构建日志、提问、审查报告）跟随用户语言。自动检测用户输入语言或通过 `--lang=zh` 显式指定。代码和提交信息保持英文。
 
-**14. Compound 知识系统** -- `/super-aidlc:compound` 在解决非平凡问题后，将结构化解决方案提取到 `aidlc-docs/solutions/`（带 YAML frontmatter 可搜索）。`/super-aidlc:compound-refresh` 通过 Keep/Update/Consolidate/Replace/Delete 五种操作维护知识库质量。三层搜索：约定 → 解决方案 → 构建日志。
+**14. Compound 知识系统** -- `/super-aidlc:compound` 将结构化解决方案提取到 `aidlc-docs/solutions/`。跨项目通用知识自动提升到 `~/.aidlc/global-solutions/`。四层搜索：约定 → 项目解决方案 → 全局解决方案 → 构建日志。`/super-aidlc:janitor` 自动评分并 compound 未处理的 session。`/super-aidlc:metrics` 追踪跨 session 指标趋势。
 
 **15. 并行研究 Agent** -- Medium/Heavy 任务同时派出最多 4 个研究 Agent：Researcher（代码模式）、Learnings Researcher（解决方案知识库）、Git History Analyzer（代码演化）、Best Practices Researcher（外部最佳实践）。
 
@@ -108,6 +108,7 @@ git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 | `/super-aidlc:compound [上下文]` | 提取知识到 `aidlc-docs/solutions/` |
 | `/super-aidlc:compound-refresh [范围]` | 维护知识库质量 |
 | `/super-aidlc:janitor [--days=N]` | 自动扫描历史 session，compound 有价值的 |
+| `/super-aidlc:metrics [--days=N]` | 会话指标趋势（时间、测试、bug、compound 分数）|
 
 然后：`/super-aidlc [描述你要构建的东西]`
 

@@ -39,6 +39,12 @@ Search in this order, each layer adding depth:
 4. Deep-read top 3 matches. Extract: solution approach, dead ends, prevention strategies.
 5. If two solutions for similar problems conflict, flag the contradiction.
 
+**Layer 2b: Global Solutions** -- Search `~/.aidlc/global-solutions/` if it exists:
+1. Same search process as Layer 2 but lower priority.
+2. Only search if Layer 2 found fewer than 3 relevant matches.
+3. Mark global results with "(global)" so builders know they may need project-specific adaptation.
+4. Global solutions are cross-project knowledge -- useful but less precise than project-local.
+
 **Layer 3: Build Logs** -- Scan `aidlc-docs/*/build-log.md` summaries for session history:
 1. Read just the `## Summary` section of every build-log.md (quick index scan).
 2. Select the 3 most relevant logs by task similarity (not recency).

@@ -192,10 +192,16 @@ Super-AIDLC v4 uses a three-layer knowledge system, searched in this order:
 - Select 3 most relevant by task similarity (not recency).
 - Extract: Issues Encountered, Decisions Made, Alternatives Considered.
 
+**Layer 2b: Global Solutions** (`~/.aidlc/global-solutions/`)
+- Cross-project knowledge shared across all your projects.
+- Created by `/super-aidlc:compound` when a solution is language/tool-generic.
+- Lower priority than project-local -- fills gaps when no local match.
+
 **Search process:**
 1. Read `aidlc-docs/patterns.md` (Layer 1 -- conventions).
-2. Search `aidlc-docs/solutions/` frontmatter by module/component/tags (Layer 2 -- deep knowledge). Deep-read top 3 matches.
-3. Scan build-log summaries, select 3 most relevant, deep-read (Layer 3 -- session history).
+2. Search `aidlc-docs/solutions/` frontmatter by module/component/tags (Layer 2 -- project knowledge). Deep-read top 3 matches.
+3. Search `~/.aidlc/global-solutions/` if Layer 2 has < 3 matches (Layer 2b -- cross-project).
+4. Scan build-log summaries, select 3 most relevant, deep-read (Layer 3 -- session history).
 4. Build a Session Context block and inject into every builder/reviewer prompt:
 
 ```

@@ -39,7 +39,7 @@ Eleven capabilities no other AI workflow has:
 
 **8. Incremental Delivery** -- Heavy tasks with 4+ units can be shipped in batches, getting user feedback before building the next batch.
 
-**9. Compound Knowledge System** -- `/super-aidlc:compound` extracts structured solutions into `aidlc-docs/solutions/` with YAML frontmatter after solving non-trivial problems. `/super-aidlc:compound-refresh` maintains quality with Keep/Update/Consolidate/Replace/Delete operations. Three-layer search: conventions → solutions → build logs.
+**9. Compound Knowledge System** -- `/super-aidlc:compound` extracts structured solutions into `aidlc-docs/solutions/` with YAML frontmatter. Cross-project knowledge automatically promoted to `~/.aidlc/global-solutions/` when solutions are tool/language-generic. Four-layer search: conventions → project solutions → global solutions → build logs. `/super-aidlc:compound-refresh` maintains quality. `/super-aidlc:janitor` auto-scores and compounds unprocessed sessions. `/super-aidlc:metrics` tracks trends across sessions.
 
 **10. Parallel Research Agents** -- Medium/Heavy tasks dispatch up to 4 research agents simultaneously: Researcher (codebase), Learnings Researcher (solutions knowledge base), Git History Analyzer (code evolution), Best Practices Researcher (external patterns).
 
@@ -79,6 +79,7 @@ Symlink-based install -- `git pull` updates all projects.
 | `/super-aidlc:compound [context]` | Extract knowledge into `aidlc-docs/solutions/` |
 | `/super-aidlc:compound-refresh [scope]` | Maintain knowledge base quality |
 | `/super-aidlc:janitor [--days=N]` | Auto-scan past sessions, compound the valuable ones |
+| `/super-aidlc:metrics [--days=N]` | Session metrics trends (time, tests, bugs, compound scores) |
 
 ## How It Works
 
