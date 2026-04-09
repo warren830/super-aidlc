@@ -14,20 +14,30 @@ Test target: $ARGUMENTS
 Before any browser testing, detect the available tool:
 
 ```bash
-# Check for gstack browse (preferred -- fast, ~100ms/command)
+# Check for super-aidlc-browse (built-in, uses Playwright)
 B=""
-_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && B="$_ROOT/.claude/skills/gstack/browse/dist/browse"
+_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)/.claude/skills/super-aidlc}"
+[ -f "$_PLUGIN_ROOT/bin/super-aidlc-browse" ] && B="bun $_PLUGIN_ROOT/bin/super-aidlc-browse"
+
+# Fallback: check if globally installed
+[ -z "$B" ] && which super-aidlc-browse >/dev/null 2>&1 && B="super-aidlc-browse"
+
+# Fallback: gstack browse (if installed)
 [ -z "$B" ] && [ -x "$HOME/.claude/skills/gstack/browse/dist/browse" ] && B="$HOME/.claude/skills/gstack/browse/dist/browse"
 
-if [ -x "$B" ]; then
-  echo "BROWSER: gstack browse ($B)"
+if [ -n "$B" ]; then
+  echo "BROWSER: $B"
 else
-  echo "BROWSER: none (install gstack for real browser QA)"
+  echo "BROWSER: none (run: npx playwright install chromium)"
 fi
 ```
 
-If no browser tool is available, browser mode falls back to curl + HTML parsing (limited). Recommend installing gstack for full browser QA.
+If no browser tool is available, browser mode falls back to curl + HTML parsing (limited).
+
+First-time setup (one-time, ~30s):
+```bash
+npx playwright install chromium
+```
 
 ## QA Modes
 
