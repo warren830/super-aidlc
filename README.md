@@ -293,10 +293,10 @@ super-aidlc/
 ## Credits
 
 Built on ideas from:
-- [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows) -- adaptive lifecycle, documentation-driven design
-- [Superpowers](https://github.com/obra/superpowers) -- TDD enforcement, two-stage review
-- [gstack](https://github.com/garrytan/gstack) -- browser QA, safety guards
-- [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) -- knowledge compounding, parallel research
+- [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows) (AWS Labs) -- adaptive workflow steering rules for AI agents, three-phase lifecycle (Inception→Construction→Operations), design-first with "Bolts" rapid iteration
+- [Superpowers](https://github.com/obra/superpowers) (Jesse Vincent) -- composable skills for coding agents, non-negotiable TDD + verification-before-completion, subagent-driven development with two-stage review
+- [gstack](https://github.com/garrytan/gstack) (Garry Tan) -- virtual engineering team as slash commands (15 specialists + 6 power tools), Think→Plan→Build→Review→Test→Ship→Reflect sprint cycle, real-browser QA with Playwright
+- [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) (Every Inc) -- "each unit of engineering work should make subsequent units easier", knowledge compounding via documented solutions, 80% planning+review / 20% execution
 
 ## License
 

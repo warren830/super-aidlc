@@ -290,10 +290,10 @@ super-aidlc/
 ## 致谢
 
 基于以下开源项目的理念：
-- [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows) -- 自适应生命周期、文档驱动设计
-- [Superpowers](https://github.com/obra/superpowers) -- TDD 强制、两阶段审查
-- [gstack](https://github.com/garrytan/gstack) -- 浏览器 QA、安全防护
-- [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) -- 知识积累、并行研究
+- [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows)（AWS Labs）-- AI 代理的自适应工作流引导规则，三阶段生命周期（Inception→Construction→Operations），设计优先 + "Bolts" 快速迭代
+- [Superpowers](https://github.com/obra/superpowers)（Jesse Vincent）-- 可组合的编码代理技能库，不可协商的 TDD + 完成前验证，子代理驱动开发 + 两阶段审查
+- [gstack](https://github.com/garrytan/gstack)（Garry Tan）-- 虚拟工程团队（15 个专家 + 6 个工具），Think→Plan→Build→Review→Test→Ship→Reflect 冲刺循环，Playwright 真实浏览器 QA
+- [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)（Every Inc）-- "每次工程投入应让下次更容易"，通过文档化解决方案积累知识，80% 规划+审查 / 20% 执行
 
 ## 许可证
 
