@@ -1,0 +1,15 @@
+{
+  "name": "super-aidlc",
+  "displayName": "Super-AIDLC",
+  "description": "Structured development with design docs, parallel builds, TDD, specialist reviewers, and compound knowledge system",
+  "version": "4.1.0",
+  "author": {
+    "name": "Warren",
+    "url": "https://github.com/warren830"
+  },
+  "homepage": "https://github.com/warren830/super-aidlc",
+  "repository": "https://github.com/warren830/super-aidlc",
+  "license": "MIT",
+  "skills": "./skills/",
+  "agents": "./agents/"
+}

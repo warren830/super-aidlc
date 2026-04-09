@@ -1,0 +1,33 @@
+{
+  "name": "super-aidlc",
+  "version": "4.1.0",
+  "description": "Structured development skill for AI coding agents: design docs, parallel builds, TDD, specialist reviewers, compound knowledge",
+  "author": "Warren <warren@github.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/warren830/super-aidlc"
+  },
+  "homepage": "https://github.com/warren830/super-aidlc",
+  "bin": {
+    "super-aidlc": "./bin/super-aidlc"
+  },
+  "scripts": {
+    "test": "bun test",
+    "validate": "bun run src/cli.ts validate",
+    "metrics": "bun run src/cli.ts metrics",
+    "version": "bun run src/cli.ts version"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "keywords": [
+    "claude-code",
+    "kiro",
+    "ai-development",
+    "tdd",
+    "code-review",
+    "compound-knowledge",
+    "structured-development"
+  ]
+}
