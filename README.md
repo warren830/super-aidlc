@@ -99,7 +99,7 @@ This is the main entry point. It auto-detects complexity and routes:
 | `/super-aidlc:brainstorm [idea]` | Vague idea, need to explore | `/super-aidlc:brainstorm I want some kind of notification system` |
 | `/super-aidlc:design [task]` | Want design doc without coding | `/super-aidlc:design payment processing module` |
 
-**Brainstorm** asks WHO/WHAT/WHY, explores 2-3 approaches, defines scope, outputs a `requirements.md` that feeds into the main pipeline.
+**Brainstorm** asks WHO/WHAT/WHY, then runs 3 parallel lenses (Product: "right problem?", Engineering: "hard risks?", Design: "UX issues?") on each approach. Defines scope, outputs `requirements.md` that feeds into the main pipeline.
 
 **Design** runs full inception (research → questions → design doc → review) but stops before writing code. Use when you want to review the architecture before committing.
 
@@ -112,7 +112,7 @@ This is the main entry point. It auto-detects complexity and routes:
 | `/super-aidlc:qa [url]` | Test a running app | `/super-aidlc:qa http://localhost:3000` |
 | `/super-aidlc:ship [branch]` | Verify + commit + push + PR | `/super-aidlc:ship` |
 
-**Review** runs two stages: spec compliance (did you build what was asked?) then parallel quality review (correctness + security + performance + adversarial reviewers).
+**Review** runs two stages: spec compliance (did you build what was asked?) then up to 8 parallel specialist reviewers (correctness, quality, maintainability always-on + security, performance, reliability, API contract, adversarial conditionally selected).
 
 **Debug** follows the Iron Law: investigate → analyze → hypothesize → implement. No shotgun fixes. Always produces a regression test.
 
@@ -255,7 +255,7 @@ Ship:          Commit → Push → PR
 Compound:      Score session → auto-extract if valuable → aidlc-docs/solutions/
 ```
 
-### 12 Agents
+### 15 Agents
 
 | Agent | Role |
 |-------|------|
@@ -267,12 +267,16 @@ Compound:      Score session → auto-extract if valuable → aidlc-docs/solutio
 | Builder | TDD builder + self-check protocol |
 | Design Reviewer | Independent design review (Heavy) |
 | Spec Reviewer | Stage 1: built what was asked? |
+| Quality Reviewer | Stage 2: overall quality gate |
 | Correctness Reviewer | Logic errors, edge cases, state bugs |
 | Security Reviewer | Vulnerabilities, exploits, OWASP |
 | Performance Reviewer | N+1, memory, scalability |
+| Maintainability Reviewer | Coupling, complexity, naming, dead code |
+| Reliability Reviewer | Error handling, retries, timeouts, failure modes |
+| API Contract Reviewer | Breaking changes, response shapes, versioning |
 | Adversarial Reviewer | Failure scenarios, attack vectors |
-
-Plus: Quality Reviewer (overall gate), QA Agent, Debugger.
+| QA Agent | Browser/API/CLI testing with real Chromium |
+| Debugger | Root-cause investigation (4-phase) |
 
 ## Project Structure
 
@@ -281,7 +285,7 @@ super-aidlc/
   VERSION                           # 4.0.0
   SKILL.md                          # Entry point
   phases/                           # brainstorm, inception, construction, operations
-  agents/                           # 15 specialized agents
+  agents/                           # 18 specialized agents
   skills/                           # 10 slash commands
   guards/                           # careful, freeze, verification
   rules/                            # tdd, review-protocol, anti-patterns, overconfidence

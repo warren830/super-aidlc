@@ -62,24 +62,32 @@ Stage 2 dispatches multiple specialist reviewers in PARALLEL. Each reviewer focu
 |-------|-------|------|
 | **Quality Reviewer** | Security, correctness, data integrity (Pass 1 + Pass 2) | `agents/quality-reviewer.md` |
 | **Correctness Reviewer** | Logic errors, edge cases, state bugs | `agents/correctness-reviewer.md` |
+| **Maintainability Reviewer** | Coupling, complexity, naming, dead code | `agents/maintainability-reviewer.md` |
 
 ### Conditional Reviewers (selected per diff)
 
 | Agent | Trigger | File |
 |-------|---------|------|
-| **Security Reviewer** | Diff touches auth, endpoints, user input, permissions | `agents/security-reviewer.md` |
-| **Performance Reviewer** | Diff touches DB queries, data transforms, caching, async | `agents/performance-reviewer.md` |
-| **Adversarial Reviewer** | Diff >=50 changed non-test lines, or auth/payments/data mutations | `agents/adversarial-reviewer.md` |
+| **Security Reviewer** | Auth, endpoints, user input, permissions | `agents/security-reviewer.md` |
+| **Performance Reviewer** | DB queries, data transforms, caching, async | `agents/performance-reviewer.md` |
+| **Reliability Reviewer** | Error handling, retries, timeouts, background jobs, external calls | `agents/reliability-reviewer.md` |
+| **API Contract Reviewer** | Routes, serializers, response shapes, type signatures | `agents/api-contract-reviewer.md` |
+| **Adversarial Reviewer** | >=50 changed non-test lines, or auth/payments/data mutations | `agents/adversarial-reviewer.md` |
 
 ### Dispatch
 
 Launch all applicable reviewers in a single parallel dispatch:
 ```
 Agent(correctness-reviewer, ...) +
-Agent(security-reviewer, ...) +     # if triggered
-Agent(performance-reviewer, ...) +   # if triggered
-Agent(adversarial-reviewer, ...)     # if triggered
+Agent(maintainability-reviewer, ...) +
+Agent(security-reviewer, ...) +          # if triggered
+Agent(performance-reviewer, ...) +       # if triggered
+Agent(reliability-reviewer, ...) +       # if triggered
+Agent(api-contract-reviewer, ...) +      # if triggered
+Agent(adversarial-reviewer, ...)         # if triggered
 ```
+
+Review scales naturally: a small config change triggers 3 always-on reviewers. A full-stack auth feature with API changes triggers all 8.
 
 ### Findings Merge & Dedup
 

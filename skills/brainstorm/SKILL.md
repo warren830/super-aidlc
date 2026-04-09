@@ -1,6 +1,6 @@
 ---
 name: super-aidlc:brainstorm
-description: Explore requirements before committing to design. Use when scope is ambiguous, multiple approaches exist, or the problem needs clarification.
+description: Explore requirements before committing to design. Multi-perspective review (Product, Engineering, Design). Use when scope is ambiguous, multiple approaches exist, or the problem needs clarification.
 argument-hint: "[describe what you want to explore]"
 model: opus
 ---
@@ -11,52 +11,86 @@ The user wants to explore: $ARGUMENTS
 
 ## Process
 
-### Step 1: Understand Intent
+### Step 1: Understand Intent (5 Forcing Questions)
 
-Ask 3-5 forcing questions to expose the core need:
+Ask one question at a time. Use multiple-choice options when possible. Lead with a recommendation.
 
-1. **WHO** -- Who is the primary user of this feature? What is their workflow today?
+1. **WHO** -- Who is the primary user? What is their workflow today?
 2. **WHAT** -- What specific problem are they trying to solve? (Not "what feature" -- what PROBLEM.)
-3. **WHY NOW** -- Why does this need to exist? What is the trigger or urgency?
-4. **WHAT EXISTS** -- Is there a current workaround? What is wrong with it?
-5. **WHAT SUCCESS** -- How will we know this worked? What is the measurable outcome?
+3. **WHY NOW** -- Why does this need to exist? What changed?
+4. **WHAT EXISTS** -- Current workaround? What is wrong with it?
+5. **WHAT SUCCESS** -- How will we know this worked? Measurable outcome.
 
-Ask one question at a time. Use multiple-choice options when natural options exist. Lead with a recommendation.
+### Step 2: Multi-Perspective Exploration
 
-### Step 2: Explore Approaches
+Once intent is clear, explore 2-3 approaches. For each, run three parallel review lenses:
 
-Once intent is clear, explore 2-3 approaches:
+Launch 3 subagents IN PARALLEL:
 
-For each approach:
-- **Name**: Short descriptive name
-- **How it works**: 2-3 sentences
-- **Pros**: What is good about this approach
-- **Cons**: What is risky or limiting
-- **Effort**: Relative (small / medium / large)
-- **Recommendation**: Which approach and why
+**Product Lens** (think like a CEO):
+- Is this the right problem to solve? Is there a bigger opportunity hiding behind this request?
+- What would the "10-star version" look like? (Airbnb's framework: 1-star = broken, 5-star = good, 10-star = magical)
+- Who are we NOT building for? (anti-personas)
+- What's the simplest version that delivers 80% of the value?
+- Red flag: are we building what was requested, or what's actually needed?
 
-Present to user for selection. If the user picks one, proceed. If none fit, iterate.
+**Engineering Lens** (think like a Staff Engineer):
+- What's the simplest architecture that works?
+- Where are the data flow bottlenecks?
+- What existing patterns in the codebase should we follow or break?
+- What are the hard technical risks? (not "might be complex" -- specific failure modes)
+- What would we regret in 6 months? What's easy to change later vs. locked in now?
 
-### Step 3: Define Scope Boundaries
+**Design Lens** (think like a Senior Designer):
+- What are the critical user flows? Walk through each step.
+- Where will users get confused or stuck?
+- What state transitions exist? (loading, empty, error, success, partial)
+- Is there AI-generated slop risk? (generic placeholders, meaningless metrics, decorative elements)
+- What's the information hierarchy? What should the user see first/last?
+
+Each lens returns a brief assessment (5-10 lines) with STRENGTHS and CONCERNS.
+
+### Step 3: Synthesize Approaches
+
+For each approach, present:
+
+```
+### Approach A: {Name}
+How it works: {2-3 sentences}
+
+Product: {1-line verdict from Product Lens}
+Engineering: {1-line verdict from Engineering Lens}  
+Design: {1-line verdict from Design Lens}
+
+Pros: {bullet list}
+Cons: {bullet list}
+Effort: {small / medium / large}
+Risk: {low / medium / high -- from Engineering Lens}
+```
+
+**Recommendation**: Which approach and why. Explain the tradeoff.
+
+### Step 4: Define Scope Boundaries
 
 After approach is chosen:
 
 - **In scope**: What this feature WILL do (bullet list)
-- **Out of scope**: What this feature will NOT do (bullet list, equally important)
+- **Out of scope**: What this feature will NOT do (equally important)
 - **Assumptions**: What we are assuming to be true
-- **Open questions**: What we still need to figure out (blocking vs. deferrable)
+- **Open questions**:
+  - Blocking (resolve before design)
+  - Deferrable (resolve during implementation)
 
-### Step 4: Research Context
+### Step 5: Research Context
 
-Launch parallel research agents to gather context:
-
+Launch parallel research agents:
 1. **Learnings Researcher** -- search `aidlc-docs/solutions/` for related past solutions
-2. **Git History Analyzer** -- check recent activity in related code areas
-3. **Researcher** -- scan codebase for existing patterns and constraints
+2. **Git History Analyzer** -- recent activity in related code areas
+3. **Researcher** -- codebase patterns and constraints
 
-Inject findings into the scope document before finalizing.
+Inject findings into the requirements document.
 
-### Step 5: Output Requirements Document
+### Step 6: Output Requirements Document
 
 Write to `aidlc-docs/{date}-{slug}/requirements.md`:
 
@@ -67,12 +101,19 @@ Write to `aidlc-docs/{date}-{slug}/requirements.md`:
 {2-3 sentences from Step 1}
 
 ## Chosen Approach
-{Selected approach from Step 2 with rationale}
+{Selected approach from Step 3 with rationale}
+
+## Multi-Perspective Review
+### Product
+{Key insights from Product Lens}
+### Engineering
+{Key insights from Engineering Lens}
+### Design
+{Key insights from Design Lens}
 
 ## Scope
 ### In Scope
 - {bullet list}
-
 ### Out of Scope
 - {bullet list}
 
@@ -83,38 +124,39 @@ Write to `aidlc-docs/{date}-{slug}/requirements.md`:
 ## Success Criteria
 - {Measurable outcome from Step 1}
 
+## User Flows
+{Critical flows identified by Design Lens}
+
+## Technical Risks
+{From Engineering Lens -- specific failure modes, not vague concerns}
+
 ## Assumptions
 - {What we assume to be true}
 
 ## Open Questions
 ### Blocking (resolve before design)
 - {Question that changes the design}
-
 ### Deferrable (resolve during implementation)
 - {Question that can wait}
 
 ## Research Context
-{Summary from Step 4 research agents}
+{Summary from Step 5 research agents}
 ```
 
-### Step 6: Handoff to Inception
-
-After the user approves the requirements doc:
+### Step 7: Handoff
 
 ```
-Requirements captured. Ready for design phase.
-Run /super-aidlc to continue with inception using these requirements.
+Requirements captured. Next steps:
+  /super-aidlc [task]              → full pipeline using these requirements
+  /super-aidlc:design [task]       → design doc only
+  /super-aidlc:brainstorm [task]   → explore a different angle
 ```
-
-The Inception phase reads `aidlc-docs/{date}-{slug}/requirements.md` automatically. If it exists, Inception:
-- Skips redundant questions already answered in requirements
-- Uses the requirements as primary input for the Architect
-- Carries forward scope boundaries and assumptions
 
 ## Rules
 
-- **One question at a time.** Never dump all 5 forcing questions in a wall of text.
-- **Options over open-ended.** When possible, give 2-4 choices with recommendations.
-- **Explore before narrowing.** Let the user change their mind in Steps 1-2. Lock in at Step 3.
-- **Never design in brainstorm.** No architecture, no file structures, no code. That is Inception's job.
-- **Keep it under 15 minutes.** If brainstorm is taking longer, the problem is too big -- suggest splitting.
+- **One question at a time.** Never dump all 5 questions at once.
+- **Options over open-ended.** Give 2-4 choices with recommendations.
+- **Three lenses are parallel, not sequential.** Dispatch simultaneously.
+- **Never design in brainstorm.** No architecture, no file structures, no code.
+- **Keep it under 15 minutes.** If longer, the problem is too big -- suggest splitting.
+- **Challenge the request.** If Product Lens says "you're solving the wrong problem," surface that.

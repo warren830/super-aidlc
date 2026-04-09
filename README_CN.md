@@ -99,7 +99,7 @@ claude
 | `/super-aidlc:brainstorm [想法]` | 模糊想法，需要探索 | `/super-aidlc:brainstorm 我想做某种通知系统` |
 | `/super-aidlc:design [任务]` | 只要设计不要代码 | `/super-aidlc:design 支付处理模块` |
 
-**Brainstorm** 问 谁/什么/为什么，探索 2-3 种方案，定义范围，输出 `requirements.md` 供主流程使用。
+**Brainstorm** 问 谁/什么/为什么，然后对每个方案并行跑 3 个视角（产品："对的问题？"、工程："硬风险？"、设计："UX 问题？"）。定义范围，输出 `requirements.md` 供主流程使用。
 
 **Design** 跑完整的 inception（研究 → 提问 → 设计文档 → 审查）但不写代码。想先看架构再动手时用。
 
@@ -112,7 +112,7 @@ claude
 | `/super-aidlc:qa [url]` | 测试运行中的应用 | `/super-aidlc:qa http://localhost:3000` |
 | `/super-aidlc:ship [分支]` | 验证 + 提交 + 推送 + PR | `/super-aidlc:ship` |
 
-**Review** 两阶段：规格合规（做的是要求的吗？）→ 并行质量审查（正确性 + 安全 + 性能 + 对抗性 reviewer）。
+**Review** 两阶段：规格合规（做的是要求的吗？）→ 最多 8 个并行专项 reviewer（正确性、质量、可维护性常驻 + 安全、性能、可靠性、API 契约、对抗性按需触发）。
 
 **Debug** 遵循铁律：调查 → 分析 → 假设 → 实现。不猜。必出回归测试。
 
@@ -278,7 +278,7 @@ super-aidlc/
   VERSION                           # 4.0.0
   SKILL.md                          # 入口
   phases/                           # brainstorm, inception, construction, operations
-  agents/                           # 15 个专项 agent
+  agents/                           # 18 个专项 agent
   skills/                           # 10 个斜杠命令
   guards/                           # careful, freeze, verification
   rules/                            # tdd, review-protocol, anti-patterns, overconfidence
