@@ -2,147 +2,229 @@
 
 > 别再氛围编码了。开始工程化。
 
-Super-AIDLC 是面向 AI 编码代理（Kiro、Claude Code）的结构化开发技能。它按复杂度路由任务、先设计再编码、在并行 worktree 中用 TDD 构建、两阶段审查、自动验证直到全绿——安全加固默认开启。
+Super-AIDLC 是面向 AI 编码代理（Claude Code、Kiro）的结构化开发技能。按复杂度路由任务、先设计再编码、并行 TDD 构建、专项 Agent 审查、跨 Session 知识积累 -- 安全加固默认开启。
 
 > [English / 英文](README.md) | [Blog](docs/blog-cn.md) | [基准测试](docs/benchmark-greenfield.md)
 
 ## 为什么又一个 AI 工作流？
 
-我们在相同任务上对比了 4 种方案（[完整结果](docs/benchmark-greenfield.md)）：
+相同任务 4 种方案对比（[完整结果](docs/benchmark-greenfield.md)）：
 
 | 方案 | 速度 | 测试数 | 安全漏洞 | 设计文档 |
 |------|------|--------|----------|----------|
-| 裸写（无方法论） | **4 分钟** | 33 | Shell 注入、路径遍历、内存泄露 | 无 |
+| 裸写 | **4 分钟** | 33 | Shell 注入、路径遍历、内存泄露 | 无 |
 | Superpowers | 14 分钟 | 69 | Shell 注入、路径遍历、内存泄露 | 无 |
-| AIDLC-workflows | 9 分钟 | 49 | Shell 注入、路径遍历、内存泄露 | 13 个文件（审计） |
-| **Super-AIDLC** | 16 分钟 | **85** | **无** | **2 个文件（设计 + 构建日志）** |
+| AIDLC-workflows | 9 分钟 | 49 | Shell 注入、路径遍历、内存泄露 | 13 文件 |
+| **Super-AIDLC** | 16 分钟 | **85** | **无** | **2 文件** |
 
-Super-AIDLC 是唯一产出零已知安全漏洞代码的方案。多花的时间换来了真正的安全。
+唯一产出零安全漏洞代码的方案。
 
-## 与其他方法论对比
+跨 Session 测试（[完整结果](docs/benchmark-cross-session.md)）：在 DevLake 上连续 3 个 Session，Super-AIDLC 在 Session 3 比 Superpowers 快 13%，零 issues -- 因为 2 个 Session 的积累知识提供了清晰的实现路径。
 
-| 能力 | Super-AIDLC | Superpowers | AIDLC-workflows | gstack |
-|------|------------|-------------|-----------------|--------|
-| TDD 强制执行 | 严格，含反合理化 | 严格 | 可选（扩展） | 无 |
-| 并行 Agent 构建 | 是（worktree） | 是（子代理） | 否 | 否 |
-| 两阶段代码审查 | 规格+质量（独立 Agent） | 规格+质量（子代理） | 否 | 单次审查 |
-| 安全基线 | 默认开启，多语言 | 无 | 无 | CSO 技能（手动） |
-| 设计文档 | Medium/Heavy 必须 | 头脑风暴输出 | HLD/LLD 产物 | 无正式文档 |
-| 知识积累系统 | 三层（约定 + 解决方案 + 日志）| 无 | 审计跟踪 | 无 |
-| 知识库维护 | /compound-refresh（5 种操作）| 无 | 无 | 无 |
-| 并行研究 Agent | 4 个（代码+知识库+Git+最佳实践）| 无 | 无 | 无 |
-| 并行专项 Reviewer | 正确性+安全+性能+对抗 | 单一 | 无 | 单次审查 |
-| Kiro 集成 | 原生（读写 .kiro/specs） | 无 | 原生 | 无 |
-| 上下文效率 | 按需懒加载 | 整体计划（~60k tokens） | 常驻（~12k tokens） | 常驻（~360 行） |
-| 复杂度路由 | 3 级（Light/Medium/Heavy） | 单一流程 | 单一流程 | 按技能 |
-| 过度自信防护 | 专用规则+自查协议 | 无 | 专用规则 | 无 |
-| 依赖审计 | 验证循环中自动执行 | 无 | 无 | CSO 技能（手动） |
-| 问题验证 | 发现阶段（Heavy） | Option Zero（已提议） | 无 | Office Hours |
-| 增量交付 | 4+ 单元可分批发布 | 无 | 无 | 无 |
-| 卸载支持 | 有 | 无 | 无 | 有 |
-| Stars（2026.03） | 新项目 | 108k | 822 | 41k |
-
-## 16 个独有能力
-
-**1. 三策略 Subagent 构建** -- 自动选择 Inline（1-2 单元，零开销）、Serial（有依赖单元，附带知识注入）、或 Parallel（独立单元用 worktree）。Parallel 模式 worktree 优先、background fallback。每单元自检、实时任务追踪、冲突自动重试。
-
-**2. 跨会话学习** -- 按任务相关性（而非时间）选择历史构建日志。在 `aidlc-docs/patterns.md` 中累积项目模式。每次运行让下次更聪明。
-
-**3. Kiro Specs 集成** -- 读取 `.kiro/specs/`，如果已有需求文档则跳过提问直接构建。构建完回写状态。
-
-**4. 自动验证修复循环** -- 自动跑测试/编译/lint，失败触发 debugger agent 修复，最多重试 3 次。开始前创建回滚检查点。
-
-**5. 独立设计审查** -- Heavy 任务由独立的 Design Reviewer Agent（非自审）检查错误路径覆盖、单元独立性和过度工程。
-
-**6. 接口契约验证** -- 跨单元依赖在设计文档中定义为契约，合并后验证，防止集成失败。
-
-**7. 多语言安全基线** -- 输入安全规则附带 TypeScript、Python、Go、Java、Rust 代码示例。默认开启。
-
-**8. 增量交付** -- 4+ 单元的 Heavy 任务可分批交付，先交付最高价值批次，根据反馈调整后续批次。
-
-**9. 过度自信防护** -- 专用规则检测并阻止 Agent 跳过步骤。每个阶段转换时运行自查协议。基于 Superpowers、AIDLC 和 gstack 中观察到的失败模式。
-
-**10. 上下文预算管理** -- 按需懒加载文档，而非预先加载所有内容。按复杂度缩放上下文：Light ~5k tokens，Medium ~15k，Heavy ~30k。避免困扰其他方法论的 token 膨胀。
-
-**11. 跨模型审查** -- 可选将质量审查分发给不同模型（如 Sonnet 审查 Opus 的代码），以捕获同模型盲点。分歧呈现给用户决定。
-
-**12. 多会话迭代** -- Continue 模式从上次会话中断处继续。版本迭代（v1 -> v2）在先前决定基础上构建，不重新辩论已确定的选择。
-
-**13. 多语言文档生成** -- 所有生成的文档（设计文档、构建日志、提问、审查报告）跟随用户语言。自动检测用户输入语言或通过 `--lang=zh` 显式指定。代码和提交信息保持英文。
-
-**14. Compound 知识系统** -- `/super-aidlc:compound` 将结构化解决方案提取到 `aidlc-docs/solutions/`。跨项目通用知识自动提升到 `~/.aidlc/global-solutions/`。四层搜索：约定 → 项目解决方案 → 全局解决方案 → 构建日志。`/super-aidlc:janitor` 自动评分并 compound 未处理的 session。`/super-aidlc:metrics` 追踪跨 session 指标趋势。
-
-**15. 并行研究 Agent** -- Medium/Heavy 任务同时派出最多 4 个研究 Agent：Researcher（代码模式）、Learnings Researcher（解决方案知识库）、Git History Analyzer（代码演化）、Best Practices Researcher（外部最佳实践）。
-
-**16. 并行专项 Reviewer** -- 第二阶段代码审查同时派出 correctness、security、performance、adversarial 四个专项 reviewer，带置信度分级和发现去重。
+---
 
 ## 快速开始
+
+### 安装
 
 ```bash
 git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 
-# Claude Code（全局 -- 所有项目可用）
+# 全局安装（所有项目可用）
 ~/super-aidlc/adapters/claude-code/install.sh --global
 
-# Claude Code（单个项目）
+# 或单个项目
 ~/super-aidlc/adapters/claude-code/install.sh /path/to/your/project
 
 # Kiro
 ~/super-aidlc/adapters/kiro/install.sh /path/to/your/project
 
-# 验证安装
+# 验证
 ~/super-aidlc/adapters/claude-code/install.sh --verify --global
 ```
 
-## 命令列表
+符号链接安装 -- `cd ~/super-aidlc && git pull` 即可更新所有项目。
 
-| 命令 | 用途 |
-|------|------|
-| `/super-aidlc [任务]` | 完整流程 -- 自动路由 Light/Medium/Heavy |
-| `/super-aidlc:brainstorm [想法]` | 设计前探索需求 |
-| `/super-aidlc:design [任务]` | 只做设计（出设计文档，不写代码）|
-| `/super-aidlc:review [范围]` | 两阶段审查 + 并行专项 reviewer |
-| `/super-aidlc:debug [bug]` | 系统化根因调查 |
-| `/super-aidlc:qa [url]` | 浏览器 / API / CLI QA 测试 |
-| `/super-aidlc:ship [分支]` | 验证 + 提交 + 推送 + PR |
-| `/super-aidlc:compound [上下文]` | 提取知识到 `aidlc-docs/solutions/` |
-| `/super-aidlc:compound-refresh [范围]` | 维护知识库质量 |
-| `/super-aidlc:janitor [--days=N]` | 自动扫描历史 session，compound 有价值的 |
-| `/super-aidlc:metrics [--days=N]` | 会话指标趋势（时间、测试、bug、compound 分数）|
+### 第一次使用
 
-然后：`/super-aidlc [描述你要构建的东西]`
+```bash
+cd /你的项目
+claude
 
-符号链接安装 -- `git pull` 即可更新所有项目。
-
-## 工作方式
-
-```
-评估复杂度 → Light / Medium / Heavy
+# 直接描述你要什么：
+/super-aidlc 实现一个基于 JWT 的用户认证系统
 ```
 
-| 复杂度 | 流程 |
-|--------|------|
-| **Light** | TDD 构建 → 审查 → 自动验证 |
-| **Medium** | 提问 → 设计文档 → 并行 TDD 构建 → 两阶段审查 → 自动验证 |
-| **Heavy** | 问题重构 → 提问 → 完整设计（架构图 + 错误映射 + 工作单元）→ worktree 并行 TDD → 两阶段审查 → 覆盖率审计 → 自动验证 |
+就这样。Super-AIDLC 会自动判断复杂度、问结构化问题、生成设计文档、TDD 构建、审查、验证、然后提供发布。
 
-### Heavy 流水线
+---
+
+## 使用指南
+
+### 日常工作流（最常用的 3 个命令）
+
+```bash
+# 1. 开发任何功能
+/super-aidlc 给 API 加上限流
+
+# 2. 解决完一个棘手问题后：
+/super-aidlc:compound
+
+# 3. 每周知识清理：
+/super-aidlc:janitor --days=7
+```
+
+### 全部 11 个命令
+
+#### 核心流程
+
+| 命令 | 何时使用 | 示例 |
+|------|---------|------|
+| `/super-aidlc [任务]` | 任何开发任务 | `/super-aidlc 加上 WebSocket 支持` |
+
+自动检测复杂度并路由：
+
+| 复杂度 | 自动判断条件 | 流程 |
+|--------|------------|------|
+| **Light** | 修 bug、改配置、≤2 文件 | TDD → 审查 → 验证 |
+| **Medium** | 新功能、中等范围 | 提问 → 设计 → 并行构建 → 审查 → 验证 |
+| **Heavy** | 新系统、多组件 | 探索 → 研究 → 完整设计 → worktree 并行 → 专项审查 → 验证 |
+
+**标志：** `--light` `--medium` `--heavy`（强制复杂度）、`--dry-run`（预览）、`--lang=zh`（中文文档）、`--skip-review`（跳过审查）
+
+#### 构建之前
+
+| 命令 | 何时使用 | 示例 |
+|------|---------|------|
+| `/super-aidlc:brainstorm [想法]` | 模糊想法，需要探索 | `/super-aidlc:brainstorm 我想做某种通知系统` |
+| `/super-aidlc:design [任务]` | 只要设计不要代码 | `/super-aidlc:design 支付处理模块` |
+
+**Brainstorm** 问 谁/什么/为什么，探索 2-3 种方案，定义范围，输出 `requirements.md` 供主流程使用。
+
+**Design** 跑完整的 inception（研究 → 提问 → 设计文档 → 审查）但不写代码。想先看架构再动手时用。
+
+#### 构建中 / 构建后
+
+| 命令 | 何时使用 | 示例 |
+|------|---------|------|
+| `/super-aidlc:review [范围]` | 审查当前改动 | `/super-aidlc:review backend/api/` |
+| `/super-aidlc:debug [bug]` | 系统化调查 bug | `/super-aidlc:debug 有效 token 登录返回 401` |
+| `/super-aidlc:qa [url]` | 测试运行中的应用 | `/super-aidlc:qa http://localhost:3000` |
+| `/super-aidlc:ship [分支]` | 验证 + 提交 + 推送 + PR | `/super-aidlc:ship` |
+
+**Review** 两阶段：规格合规（做的是要求的吗？）→ 并行质量审查（正确性 + 安全 + 性能 + 对抗性 reviewer）。
+
+**Debug** 遵循铁律：调查 → 分析 → 假设 → 实现。不猜。必出回归测试。
+
+**QA** 自动检测模式（浏览器/API/CLI），测试用户流程并附带证据（截图、响应体）。
+
+**Ship** 确保所有测试/编译/lint 通过，创建有意义的 commit，推送并开 PR。
+
+#### 知识管理
+
+| 命令 | 何时使用 | 示例 |
+|------|---------|------|
+| `/super-aidlc:compound [上下文]` | 解决了棘手问题后 | `/super-aidlc:compound` |
+| `/super-aidlc:compound-refresh [范围]` | 重构或迁移后 | `/super-aidlc:compound-refresh performance-issues` |
+| `/super-aidlc:janitor [--days=N]` | 定期知识扫描 | `/super-aidlc:janitor --days=7` |
+| `/super-aidlc:metrics [--days=N]` | 看自己是否在进步 | `/super-aidlc:metrics --days=30` |
+
+**Compound** 从当前 session 提取结构化解决方案（问题 → 走过的弯路 → 解法 → 预防）到 `aidlc-docs/solutions/`。跨项目通用知识自动提升到 `~/.aidlc/global-solutions/`。
+
+**Compound-refresh** 对比现有解决方案和当前代码。五种操作：保留、更新、合并、替换、删除。重构后用。
+
+**Janitor** 扫描构建日志并自动评分（debugger 被调用了？多次修复尝试？新模式？）。高价值 session 自动 compound，低价值跳过。每周跑一次。
+
+**Metrics** 生成趋势报告：你是否越来越快？bug 越来越少？测试越来越多？显示哪种策略（INLINE/SERIAL/PARALLEL）最适合你的项目。
+
+### 知识系统（如何越来越聪明）
 
 ```
-Brainstorm:    谁 → 什么 → 为什么 → 方案 → 范围（可选，Heavy）
-                  ↓
-Inception:     并行研究（4 Agent）→ 提问 → 设计文档 → 审批
-                  ↓
-Construction:  [U1] [U2] [U3]  ← worktree 并行，每个 TDD
-                  ↓    ↓    ↓
-               规格审查 → 并行质量审查 → 合并
-                  ↓
-Verify:        测试 → 编译 → Lint → （失败？→ 修复 → 重试 x3）→ 全绿
-                  ↓
-Ship:          提交 → 推送 → PR
-                  ↓
-Compound:      提取知识 → aidlc-docs/solutions/（可选）
+Session 1:  aidlc-docs/ 空的 → 从零开始
+Session 2:  Researcher 读 patterns.md + 构建日志 → 避免 Session 1 的错误
+Session 3:  Researcher 读 solutions/ + patterns.md + 日志 → 利用所有先前知识
+Session N:  四层搜索 → 项目约定 → 项目解决方案 → 全局解决方案 → 构建历史
 ```
+
+知识积累位置：
+
+```
+aidlc-docs/                              # 每个项目（自动创建）
+  patterns.md                            # 约定（≤50 行，总是最先读）
+  solutions/                             # 结构化知识库
+    runtime-issues/                      # Bug 修复
+    patterns/                            # 最佳实践
+    config-issues/                       # 配置陷阱
+    testing-issues/                      # 测试心得
+    ...
+  2026-04-05-feature-name/
+    design.md                            # 架构 + 错误映射 + 决策
+    build-log.md                         # Session 历史 + 结构化指标
+
+~/.aidlc/                                # 跨项目（自动创建）
+  global-solutions/                      # 所有项目共享的知识
+```
+
+### 典型场景
+
+**新功能（Medium）：**
+```
+/super-aidlc 加上用户头像上传和编辑
+→ 问 ~5 组结构化问题
+→ 生成设计文档（含架构图）
+→ 并行构建 2-3 个单元（TDD）
+→ 规格审查 → 并行质量审查
+→ 自动验证（测试 + 编译 + lint）
+→ 提供发布
+→ 自动评估 compound 分数
+```
+
+**修 Bug（Light）：**
+```
+/super-aidlc:debug 邮件队列在高负载下丢消息
+→ 调查 → 复现 → 根因
+→ 回归测试 → 修复 → 验证
+→ 如果 compound 分数 >= 3 则自动提取知识
+```
+
+**探索新想法：**
+```
+/super-aidlc:brainstorm 我想做类似 Google Docs 的实时协作
+→ 谁/什么/为什么 提问
+→ 2-3 种方案（WebSocket vs SSE vs 轮询）
+→ 范围定义 → 输出 requirements.md
+
+/super-aidlc:design 实时协作
+→ 自动读取 requirements.md → 生成设计文档
+
+/super-aidlc 实现实时协作
+→ 自动读取设计文档 → 构建
+```
+
+**每周维护：**
+```
+/super-aidlc:janitor --days=7              # compound 未处理的有价值 session
+/super-aidlc:compound-refresh              # 检查过时知识
+/super-aidlc:metrics --days=30             # 我们在进步吗？
+```
+
+### 更新
+
+```bash
+cd ~/super-aidlc && git pull
+# 所有已安装的项目立即更新（符号链接）
+```
+
+### 卸载
+
+```bash
+~/super-aidlc/adapters/claude-code/uninstall.sh /path/to/your/project
+# 全局卸载：删除 ~/.claude/skills/super-aidlc* 目录
+```
+
+注意：项目中的 `aidlc-docs/` 不会被删除 -- 那是你的设计文档和积累的知识。
+
+---
 
 ## 五条铁律
 
@@ -152,72 +234,66 @@ Compound:      提取知识 → aidlc-docs/solutions/（可选）
 4. **没有全绿验证就没有发布。** 失败自动修复最多 3 次。
 5. **没有消毒就不能让用户输入进入 shell/文件系统/模板。** 安全默认开启。
 
+## 架构
+
+```
+Brainstorm:    谁 → 什么 → 为什么 → 方案 → 范围（可选）
+                  ↓
+Inception:     并行研究（4 Agent）→ 提问 → 设计文档 → 审批
+                  ↓
+Construction:  [U1] [U2] [U3]  ← INLINE / SERIAL / PARALLEL（自动选择）
+                  ↓    ↓    ↓
+               规格审查 → 并行质量审查 → 合并
+                  ↓
+Verify:        测试 → 编译 → Lint → （失败？→ debugger → 重试 x3）→ 全绿
+                  ↓
+Ship:          提交 → 推送 → PR
+                  ↓
+Compound:      评分 → 高价值自动提取 → aidlc-docs/solutions/
+```
+
+### 12 个 Agent
+
+| Agent | 职责 |
+|-------|------|
+| Researcher | 代码模式 + 四层知识搜索 |
+| Learnings Researcher | 搜索解决方案知识库 |
+| Git History Analyzer | 代码演化 + 热点检测 |
+| Best Practices Researcher | 外部模式 + 框架文档 |
+| Architect | 设计文档生成（不写代码）|
+| Builder | TDD 构建 + 自检协议 |
+| Design Reviewer | 独立设计审查（Heavy）|
+| Spec Reviewer | 第一阶段：做的是要求的吗？ |
+| Correctness Reviewer | 逻辑错误、边界条件、状态 bug |
+| Security Reviewer | 漏洞、利用、OWASP |
+| Performance Reviewer | N+1、内存、可扩展性 |
+| Adversarial Reviewer | 故障场景、攻击向量 |
+
+另有：Quality Reviewer（总体门槛）、QA Agent、Debugger。
+
 ## 项目结构
 
 ```
 super-aidlc/
-  VERSION                           # 语义化版本号（4.0.0）
-  SKILL.md                          # 入口：复杂度路由 + 命令
-  CONTRIBUTING.md                   # 贡献指南
-  phases/
-    brainstorm.md                   # 前置探索阶段（可选，v4）
-    inception.md                    # 设计：并行研究 → 提问 → 文档 → 审批
-    construction.md                 # 构建：TDD + 并行 + 审查 + compound
-    operations.md                   # 发布：浏览器 QA、发版、文档更新
-  agents/
-    researcher.md                   # 上下文过滤 + 三层知识搜索
-    learnings-researcher.md         # 解决方案知识库搜索（v4）
-    git-history-analyzer.md         # 代码演化 + 热点分析（v4）
-    best-practices-researcher.md    # 外部模式 + 框架文档（v4）
-    architect.md                    # 设计文档生成（不写代码）
-    builder.md                      # TDD 构建者 + 输入安全规则
-    design-reviewer.md              # 独立设计文档审查（Heavy）
-    spec-reviewer.md                # 第一阶段：做的是要求的吗？
-    quality-reviewer.md             # 第二阶段：总体质量门槛
-    correctness-reviewer.md         # 并行：逻辑错误 + 边界条件（v4）
-    security-reviewer.md            # 并行：安全漏洞（v4）
-    performance-reviewer.md         # 并行：性能 + 资源（v4）
-    adversarial-reviewer.md         # 并行：故障场景（v4）
-    qa.md                           # 浏览器 QA（Playwright，可选）
-    debugger.md                     # 根因调查
-  skills/
-    brainstorm/SKILL.md             # /super-aidlc:brainstorm
-    design/SKILL.md                 # /super-aidlc:design
-    review/SKILL.md                 # /super-aidlc:review
-    debug/SKILL.md                  # /super-aidlc:debug
-    qa/SKILL.md                     # /super-aidlc:qa
-    ship/SKILL.md                   # /super-aidlc:ship
-    compound/SKILL.md               # /super-aidlc:compound
-    compound-refresh/SKILL.md       # /super-aidlc:compound-refresh
-  guards/
-    careful.md                      # 破坏性命令拦截
-    freeze.md                       # 编辑范围锁定
-    verification.md                 # 必须有证据才能声称完成
-  rules/
-    tdd.md                          # TDD 参考 + 反合理化
-    review-protocol.md              # 两阶段审查 + 并行专项
-    anti-patterns.md                # 测试反模式
-    overconfidence-prevention.md    # 防跳步规则 + 自查协议
-    context-budget.md               # Token 效率 + 懒加载策略
-  extensions/
-    security-baseline.md            # 输入安全 + 依赖审计（默认开启）
-  adapters/
-    claude-code/install.sh          # Claude Code 安装（--verify, --global）
-    kiro/install.sh                 # Kiro 安装
-  docs/
-    blog-cn.md                      # 为什么以及怎么构建的
-    blog-en.md                      # 英文版
-    benchmark-greenfield.md         # 单次会话基准测试
-    benchmark-brownfield.md         # 棕地基准测试
-    benchmark-cross-session.md      # 跨会话知识基准测试（v4）
+  VERSION                           # 4.0.0
+  SKILL.md                          # 入口
+  phases/                           # brainstorm, inception, construction, operations
+  agents/                           # 15 个专项 agent
+  skills/                           # 10 个斜杠命令
+  guards/                           # careful, freeze, verification
+  rules/                            # tdd, review-protocol, anti-patterns, overconfidence
+  extensions/                       # security-baseline
+  adapters/                         # claude-code, kiro 安装脚本
+  docs/                             # 博客、基准测试
 ```
 
 ## 致谢
 
-基于三个开源项目的理念构建：
+基于以下开源项目的理念：
 - [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows) -- 自适应生命周期、文档驱动设计
-- [Superpowers](https://github.com/obra/superpowers) -- TDD 强制执行、两阶段审查、合理化防护
-- [gstack](https://github.com/garrytan/gstack) -- 浏览器 QA、安全防护、系统化调试
+- [Superpowers](https://github.com/obra/superpowers) -- TDD 强制、两阶段审查
+- [gstack](https://github.com/garrytan/gstack) -- 浏览器 QA、安全防护
+- [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) -- 知识积累、并行研究
 
 ## 许可证
 

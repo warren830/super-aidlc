@@ -2,7 +2,7 @@
 
 > Stop vibe coding. Start engineering.
 
-Super-AIDLC is a structured development skill for AI coding agents (Kiro, Claude Code). It routes tasks by complexity, designs before coding, builds with TDD in parallel worktrees, reviews in two stages, and auto-verifies until all green -- with security hardening enabled by default.
+Super-AIDLC is a structured development skill for AI coding agents (Claude Code, Kiro). It routes tasks by complexity, designs before coding, builds with TDD in parallel, reviews with specialist agents, and compounds knowledge across sessions -- with security hardening enabled by default.
 
 > [Chinese / 中文](README_CN.md) | [Blog](docs/blog-en.md) | [Benchmarks](docs/benchmark-greenfield.md)
 
@@ -17,99 +17,217 @@ We benchmarked 4 approaches on identical tasks ([full results](docs/benchmark-gr
 | AIDLC-workflows | 9 min | 49 | Shell injection, path traversal, memory leak | 13 files (audit) |
 | **Super-AIDLC** | 16 min | **85** | **None** | **2 files (design + build log)** |
 
-Super-AIDLC is the only approach that produces code with zero known security vulnerabilities. The extra time buys real safety.
+Super-AIDLC is the only approach that produces code with zero known security vulnerabilities.
 
-## What Makes It Unique
+Cross-session benchmark ([full results](docs/benchmark-cross-session.md)): After 3 sessions on DevLake, Track A (Super-AIDLC) was 13% faster than Track B (Superpowers) in Session 3, with zero issues -- because 2 sessions of accumulated knowledge provided a clear implementation path.
 
-Eleven capabilities no other AI workflow has:
-
-**1. Three-Strategy Subagent Builds** -- Auto-selects Inline (1-2 units, no overhead), Serial (dependent units, with knowledge injection between them), or Parallel (independent units in worktrees). Parallel uses worktree-first with background-fallback when worktrees fail. Per-unit self-check, real-time task tracking, and conflict resolution with automatic retry.
-
-**2. Cross-Session Learning** -- Selects prior build logs by task relevance (not just recency). Accumulates project patterns in `aidlc-docs/patterns.md`. Each run teaches the next.
-
-**3. Kiro Specs Integration** -- Reads `.kiro/specs/` before asking questions. If specs exist, skips straight to building. Writes back after construction.
-
-**4. Auto-Verification Loop** -- Runs test/build/lint automatically. Failures trigger the debugger agent, which fixes and re-verifies up to 3 times. Creates a rollback checkpoint before starting.
-
-**5. Independent Design Review** -- Heavy tasks get a dedicated Design Reviewer Agent (not self-review) that checks error path coverage, unit independence, and over-engineering.
-
-**6. Interface Contract Verification** -- Cross-unit dependencies are defined as contracts in the design doc and verified after merge, preventing integration failures.
-
-**7. Multi-Language Security Baseline** -- Input safety rules with code examples for TypeScript, Python, Go, Java, and Rust. Default on.
-
-**8. Incremental Delivery** -- Heavy tasks with 4+ units can be shipped in batches, getting user feedback before building the next batch.
-
-**9. Compound Knowledge System** -- `/super-aidlc:compound` extracts structured solutions into `aidlc-docs/solutions/` with YAML frontmatter. Cross-project knowledge automatically promoted to `~/.aidlc/global-solutions/` when solutions are tool/language-generic. Four-layer search: conventions → project solutions → global solutions → build logs. `/super-aidlc:compound-refresh` maintains quality. `/super-aidlc:janitor` auto-scores and compounds unprocessed sessions. `/super-aidlc:metrics` tracks trends across sessions.
-
-**10. Parallel Research Agents** -- Medium/Heavy tasks dispatch up to 4 research agents simultaneously: Researcher (codebase), Learnings Researcher (solutions knowledge base), Git History Analyzer (code evolution), Best Practices Researcher (external patterns).
-
-**11. Parallel Specialist Reviewers** -- Stage 2 code review dispatches correctness, security, performance, and adversarial reviewers in parallel with confidence gating and findings dedup.
+---
 
 ## Quick Start
+
+### Install
 
 ```bash
 git clone https://github.com/warren830/super-aidlc.git ~/super-aidlc
 
-# Claude Code (global -- all projects)
+# Global install (all projects)
 ~/super-aidlc/adapters/claude-code/install.sh --global
 
-# Claude Code (single project)
+# Or single project
 ~/super-aidlc/adapters/claude-code/install.sh /path/to/your/project
 
 # Kiro
 ~/super-aidlc/adapters/kiro/install.sh /path/to/your/project
 
-# Verify installation
+# Verify
 ~/super-aidlc/adapters/claude-code/install.sh --verify --global
 ```
 
-Symlink-based install -- `git pull` updates all projects.
+Symlink-based -- `cd ~/super-aidlc && git pull` updates all installed projects instantly.
 
-## Commands
+### Your First Session
 
-| Command | Purpose |
-|---------|---------|
-| `/super-aidlc [task]` | Full pipeline -- auto-routes Light/Medium/Heavy |
-| `/super-aidlc:brainstorm [idea]` | Explore requirements before design |
-| `/super-aidlc:design [task]` | Run inception only (design doc, no code) |
-| `/super-aidlc:review [scope]` | Two-stage review with parallel specialist reviewers |
-| `/super-aidlc:debug [bug]` | Systematic root-cause investigation |
-| `/super-aidlc:qa [url]` | Browser / API / CLI QA testing |
-| `/super-aidlc:ship [branch]` | Verification + commit + push + PR |
-| `/super-aidlc:compound [context]` | Extract knowledge into `aidlc-docs/solutions/` |
-| `/super-aidlc:compound-refresh [scope]` | Maintain knowledge base quality |
-| `/super-aidlc:janitor [--days=N]` | Auto-scan past sessions, compound the valuable ones |
-| `/super-aidlc:metrics [--days=N]` | Session metrics trends (time, tests, bugs, compound scores) |
+```bash
+cd /your/project
+claude
 
-## How It Works
-
-```
-Assess complexity → Light / Medium / Heavy
+# Just describe what you want:
+/super-aidlc Build a user authentication system with JWT
 ```
 
-| Complexity | Pipeline |
-|------------|----------|
-| **Light** | TDD build → review → auto-verify |
-| **Medium** | Questions → design doc → parallel TDD build → 2-stage review → auto-verify |
-| **Heavy** | Problem reframing → questions → full design (diagram + error map + units) → parallel TDD build in worktrees → 2-stage review → coverage audit → auto-verify |
+That's it. Super-AIDLC will auto-detect complexity, ask structured questions, produce a design doc, build with TDD, review, verify, and offer to ship.
 
-### Heavy Pipeline
+---
+
+## Usage Guide
+
+### Daily Workflow (3 commands you'll use most)
+
+```bash
+# 1. Build anything
+/super-aidlc implement rate limiting for the API
+
+# 2. After a hard debugging session or solving a tricky problem:
+/super-aidlc:compound
+
+# 3. Weekly knowledge hygiene:
+/super-aidlc:janitor --days=7
+```
+
+### All 11 Commands
+
+#### Core Pipeline
+
+| Command | When to Use | Example |
+|---------|------------|---------|
+| `/super-aidlc [task]` | Any development task | `/super-aidlc add WebSocket support` |
+
+This is the main entry point. It auto-detects complexity and routes:
+
+| Complexity | Auto-detected When | What Happens |
+|------------|-------------------|--------------|
+| **Light** | Bug fix, config change, ≤2 files | TDD build → review → verify |
+| **Medium** | New feature, moderate scope | Questions → design doc → parallel build → review → verify |
+| **Heavy** | New system, multi-component | Brainstorm → research → full design → parallel worktree builds → specialist review → verify |
+
+**Flags:** `--light` `--medium` `--heavy` (force complexity), `--dry-run` (preview), `--lang=zh` (Chinese docs), `--skip-review` (escape hatch)
+
+#### Before Building
+
+| Command | When to Use | Example |
+|---------|------------|---------|
+| `/super-aidlc:brainstorm [idea]` | Vague idea, need to explore | `/super-aidlc:brainstorm I want some kind of notification system` |
+| `/super-aidlc:design [task]` | Want design doc without coding | `/super-aidlc:design payment processing module` |
+
+**Brainstorm** asks WHO/WHAT/WHY, explores 2-3 approaches, defines scope, outputs a `requirements.md` that feeds into the main pipeline.
+
+**Design** runs full inception (research → questions → design doc → review) but stops before writing code. Use when you want to review the architecture before committing.
+
+#### During / After Building
+
+| Command | When to Use | Example |
+|---------|------------|---------|
+| `/super-aidlc:review [scope]` | Review current changes | `/super-aidlc:review backend/api/` |
+| `/super-aidlc:debug [bug]` | Systematic bug investigation | `/super-aidlc:debug login returns 401 for valid tokens` |
+| `/super-aidlc:qa [url]` | Test a running app | `/super-aidlc:qa http://localhost:3000` |
+| `/super-aidlc:ship [branch]` | Verify + commit + push + PR | `/super-aidlc:ship` |
+
+**Review** runs two stages: spec compliance (did you build what was asked?) then parallel quality review (correctness + security + performance + adversarial reviewers).
+
+**Debug** follows the Iron Law: investigate → analyze → hypothesize → implement. No shotgun fixes. Always produces a regression test.
+
+**QA** auto-detects mode (browser/API/CLI) and tests user flows with evidence (screenshots, response bodies).
+
+**Ship** verifies all tests/build/lint pass, creates meaningful commits, pushes, and opens a PR with summary.
+
+#### Knowledge Management
+
+| Command | When to Use | Example |
+|---------|------------|---------|
+| `/super-aidlc:compound [context]` | After solving a hard problem | `/super-aidlc:compound` |
+| `/super-aidlc:compound-refresh [scope]` | After refactors or migrations | `/super-aidlc:compound-refresh performance-issues` |
+| `/super-aidlc:janitor [--days=N]` | Periodic knowledge scan | `/super-aidlc:janitor --days=7` |
+| `/super-aidlc:metrics [--days=N]` | See how you're improving | `/super-aidlc:metrics --days=30` |
+
+**Compound** extracts structured solutions from the current session (Problem → What Didn't Work → Solution → Prevention) into `aidlc-docs/solutions/`. Cross-project generic solutions auto-promote to `~/.aidlc/global-solutions/`.
+
+**Compound-refresh** reviews existing solutions against current code. Five actions: Keep, Update, Consolidate, Replace, Delete. Use after refactors that may have invalidated prior knowledge.
+
+**Janitor** scans build logs and auto-scores sessions (debugger invoked? multiple fix attempts? new patterns?). High-value sessions get auto-compounded. Low-value sessions are skipped. Run weekly.
+
+**Metrics** generates trend reports: are you getting faster? fewer bugs? more tests? Shows which strategies (INLINE/SERIAL/PARALLEL) work best for your projects.
+
+### Knowledge System (How It Gets Smarter)
 
 ```
-Brainstorm:    WHO → WHAT → WHY → Approaches → Scope (optional, Heavy)
-                  ↓
-Inception:     Parallel Research (4 agents) → Questions → Design Doc → Approve
-                  ↓
-Construction:  [U1] [U2] [U3]  ← parallel worktrees, each TDD
-                  ↓    ↓    ↓
-               Spec Review → Parallel Quality Reviews → Merge
-                  ↓
-Verify:        Test → Build → Lint → (fail? → fix → retry x3) → All green
-                  ↓
-Ship:          Commit → Push → PR
-                  ↓
-Compound:      Extract knowledge → aidlc-docs/solutions/ (optional)
+Session 1:  aidlc-docs/ empty → starts from scratch
+Session 2:  Researcher reads patterns.md + build logs → avoids Session 1's mistakes
+Session 3:  Researcher reads solutions/ + patterns.md + logs → leverages all prior knowledge
+Session N:  Four-layer search → project conventions → project solutions → global solutions → build history
 ```
+
+Your knowledge accumulates in:
+
+```
+aidlc-docs/                              # Per-project (auto-created)
+  patterns.md                            # Conventions (≤50 lines, always read first)
+  solutions/                             # Structured knowledge base
+    runtime-issues/                      # Bug fixes
+    patterns/                            # Best practices
+    config-issues/                       # Configuration gotchas
+    testing-issues/                      # Testing insights
+    ...
+  2026-04-05-feature-name/
+    design.md                            # Architecture + error map + decisions
+    build-log.md                         # Session history + structured metrics
+
+~/.aidlc/                                # Cross-project (auto-created)
+  global-solutions/                      # Knowledge shared across all projects
+```
+
+### Typical Workflows
+
+**New feature (Medium):**
+```
+/super-aidlc add user profile editing with avatar upload
+→ asks ~5 groups of questions
+→ produces design doc with architecture diagram
+→ parallel builds 2-3 units with TDD
+→ spec review → parallel quality review
+→ auto-verify (test + build + lint)
+→ offers to ship
+→ auto-evaluates compound score
+```
+
+**Bug fix (Light):**
+```
+/super-aidlc:debug the email queue is dropping messages under load
+→ investigate → reproduce → root cause
+→ regression test → fix → verify
+→ auto-compound if score >= 3
+```
+
+**Exploring a new idea:**
+```
+/super-aidlc:brainstorm I want real-time collaboration like Google Docs
+→ WHO/WHAT/WHY questions
+→ 2-3 approaches (WebSocket vs SSE vs polling)
+→ scope definition
+→ outputs requirements.md
+
+/super-aidlc:design real-time collaboration
+→ reads requirements.md automatically
+→ produces design doc
+
+/super-aidlc build real-time collaboration
+→ reads design doc automatically
+→ builds it
+```
+
+**Weekly maintenance:**
+```
+/super-aidlc:janitor --days=7              # compound any unprocessed valuable sessions
+/super-aidlc:compound-refresh              # check for stale knowledge
+/super-aidlc:metrics --days=30             # are we improving?
+```
+
+### Updating
+
+```bash
+cd ~/super-aidlc && git pull
+# All installed projects update instantly (symlinks)
+```
+
+### Uninstalling
+
+```bash
+~/super-aidlc/adapters/claude-code/uninstall.sh /path/to/your/project
+# Or for global: remove ~/.claude/skills/super-aidlc* directories
+```
+
+Note: `aidlc-docs/` in your project is NOT removed -- it contains your design docs and accumulated knowledge.
+
+---
 
 ## Five Iron Laws
 
@@ -119,71 +237,66 @@ Compound:      Extract knowledge → aidlc-docs/solutions/ (optional)
 4. **No shipping without all-green verification.** Auto-fix up to 3 times.
 5. **No unsanitized input to shell/filesystem/templates.** Security is default-on.
 
+## Architecture
+
+```
+Brainstorm:    WHO → WHAT → WHY → Approaches → Scope (optional)
+                  ↓
+Inception:     Parallel Research (4 agents) → Questions → Design Doc → Approve
+                  ↓
+Construction:  [U1] [U2] [U3]  ← INLINE / SERIAL / PARALLEL (auto-selected)
+                  ↓    ↓    ↓
+               Spec Review → Parallel Quality Reviews → Merge
+                  ↓
+Verify:        Test → Build → Lint → (fail? → debugger → retry x3) → All green
+                  ↓
+Ship:          Commit → Push → PR
+                  ↓
+Compound:      Score session → auto-extract if valuable → aidlc-docs/solutions/
+```
+
+### 12 Agents
+
+| Agent | Role |
+|-------|------|
+| Researcher | Codebase patterns + four-layer knowledge search |
+| Learnings Researcher | Search solutions knowledge base |
+| Git History Analyzer | Code evolution + hotspot detection |
+| Best Practices Researcher | External patterns + framework docs |
+| Architect | Design doc producer (no code) |
+| Builder | TDD builder + self-check protocol |
+| Design Reviewer | Independent design review (Heavy) |
+| Spec Reviewer | Stage 1: built what was asked? |
+| Correctness Reviewer | Logic errors, edge cases, state bugs |
+| Security Reviewer | Vulnerabilities, exploits, OWASP |
+| Performance Reviewer | N+1, memory, scalability |
+| Adversarial Reviewer | Failure scenarios, attack vectors |
+
+Plus: Quality Reviewer (overall gate), QA Agent, Debugger.
+
 ## Project Structure
 
 ```
 super-aidlc/
-  VERSION                           # Semantic version (4.0.0)
-  SKILL.md                          # Entry point: complexity routing + commands
-  phases/
-    brainstorm.md                   # Pre-inception exploration (optional, v4)
-    inception.md                    # Design: parallel research → questions → doc → approval
-    construction.md                 # Build: TDD + parallel + review + compound
-    operations.md                   # Ship: browser QA, release, doc update
-  agents/
-    researcher.md                   # Context filter + three-layer knowledge search
-    learnings-researcher.md         # Solutions knowledge base searcher (v4)
-    git-history-analyzer.md         # Code evolution + hotspot analysis (v4)
-    best-practices-researcher.md    # External patterns + framework docs (v4)
-    architect.md                    # Design doc producer (no code)
-    builder.md                      # TDD builder + input safety rules
-    design-reviewer.md              # Independent design doc review (Heavy)
-    spec-reviewer.md                # Stage 1: built what was asked?
-    quality-reviewer.md             # Stage 2: overall quality gate
-    correctness-reviewer.md         # Parallel: logic errors + edge cases (v4)
-    security-reviewer.md            # Parallel: vulnerabilities (v4)
-    performance-reviewer.md         # Parallel: perf + resources (v4)
-    adversarial-reviewer.md         # Parallel: failure scenarios (v4)
-    qa.md                           # Browser QA (Playwright, optional)
-    debugger.md                     # Root-cause investigation
-  skills/
-    brainstorm/SKILL.md             # /super-aidlc:brainstorm
-    design/SKILL.md                 # /super-aidlc:design
-    review/SKILL.md                 # /super-aidlc:review
-    debug/SKILL.md                  # /super-aidlc:debug
-    qa/SKILL.md                     # /super-aidlc:qa
-    ship/SKILL.md                   # /super-aidlc:ship
-    compound/SKILL.md               # /super-aidlc:compound
-    compound-refresh/SKILL.md       # /super-aidlc:compound-refresh
-  guards/
-    careful.md                      # Destructive command interception
-    freeze.md                       # Edit scope lock
-    verification.md                 # Evidence-before-claims gate
-  rules/
-    tdd.md                          # TDD reference + rationalization prevention
-    review-protocol.md              # Two-stage review + parallel specialists
-    anti-patterns.md                # Testing anti-patterns
-    overconfidence-prevention.md    # Anti-skip rules + self-check protocol
-    context-budget.md               # Token efficiency + lazy-loading strategy
-  extensions/
-    security-baseline.md            # Input safety + production readiness (default-on)
-  adapters/
-    claude-code/install.sh          # Claude Code install (--verify, --global)
-    kiro/install.sh                 # Kiro install
-  docs/
-    blog-en.md                      # How and why we built this
-    blog-cn.md                      # Chinese version
-    benchmark-greenfield.md         # Single-session benchmark
-    benchmark-brownfield.md         # Brownfield benchmark
-    benchmark-cross-session.md      # Cross-session knowledge benchmark (v4)
+  VERSION                           # 4.0.0
+  SKILL.md                          # Entry point
+  phases/                           # brainstorm, inception, construction, operations
+  agents/                           # 15 specialized agents
+  skills/                           # 10 slash commands
+  guards/                           # careful, freeze, verification
+  rules/                            # tdd, review-protocol, anti-patterns, overconfidence
+  extensions/                       # security-baseline
+  adapters/                         # claude-code, kiro install scripts
+  docs/                             # blogs, benchmarks
 ```
 
 ## Credits
 
 Built on ideas from:
 - [AIDLC-workflows](https://github.com/awslabs/aidlc-workflows) -- adaptive lifecycle, documentation-driven design
-- [Superpowers](https://github.com/PrimeRadiantAI/superpowers) -- TDD enforcement, two-stage review, rationalization prevention
-- [gstack](https://github.com/garrytan/gstack) -- browser QA, safety guards, systematic debugging
+- [Superpowers](https://github.com/obra/superpowers) -- TDD enforcement, two-stage review
+- [gstack](https://github.com/garrytan/gstack) -- browser QA, safety guards
+- [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) -- knowledge compounding, parallel research
 
 ## License
 
