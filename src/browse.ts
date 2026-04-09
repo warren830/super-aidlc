@@ -437,8 +437,12 @@ Commands:
     }
   } catch (err: any) {
     console.error(`Error: ${err.message}`);
+    await closeBrowser();
     process.exit(1);
   }
+
+  // Always close browser after command (each invocation is stateless)
+  await closeBrowser();
 }
 
 main();
