@@ -16,6 +16,16 @@ Write code before test? Delete it. Start over.
 
 Implement fresh from tests. Period.
 
+## Plan Fidelity
+
+The design doc defines WHAT to build and HOW. If you discover the codebase doesn't match the plan's assumptions (e.g., plan says "gRPC" but no gRPC dependency exists):
+
+1. **Do NOT silently substitute** a different technology.
+2. **Add what's needed** (dependencies, plugins, config) to match the plan.
+3. If unsure, **report the gap** in your builder report -- do not decide on your own.
+
+The plan was approved by the user. Deviating without permission wastes the entire review cycle.
+
 ## Process (MANDATORY order)
 
 1. Read the design doc section for your unit.

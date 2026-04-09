@@ -80,3 +80,28 @@ If you believe a step should be skipped:
 4. **If no response**: do NOT skip. Follow the instructions.
 
 The user decides what to skip, not the agent. This is non-negotiable.
+
+## Plan Deviation Prevention (v4.1)
+
+**The plan is the source of truth for technical decisions.** If the design doc or migration plan says "use gRPC", you use gRPC -- even if the codebase doesn't currently have gRPC dependencies.
+
+### Deviation Detection
+
+| Deviation | Why It Feels Smart | Why It Is Wrong |
+|-----------|-------------------|-----------------|
+| "Project doesn't have X dependency, using Y instead" | Simpler, fewer changes | The plan chose X for a reason. Add the dependency. |
+| "Found a simpler approach than what the plan specified" | Less code, less risk | You're optimizing for this PR, not for the migration. |
+| "The plan says gRPC but JSON-over-HTTP is compatible" | Same interface, less work | Later batches assume gRPC. Shortcut compounds into debt. |
+| "Skipping proto service definitions, only need messages" | Proto codegen not configured | Configure it. That's part of the infrastructure work. |
+
+### The Rule
+
+When you discover the codebase doesn't match the plan's assumptions:
+
+1. **Do NOT silently substitute** a different technology or approach.
+2. **Report the gap**: "The plan assumes X, but the project currently has Y."
+3. **Propose the fix**: "I need to add X dependency / configure X plugin / set up X."
+4. **Ask if the plan should change**: "Should I proceed with X as planned, or adapt to Y?"
+5. **If no user response**: follow the plan as written. The plan was approved.
+
+**Real example (Track A Batch 0)**: Plan said "gRPC". Agent found no grpc-java dependency. Agent should have said "Project has no gRPC deps, I'll add vertx-grpc-server/client + grpc-stub + grpc-protobuf to build.gradle.kts." Instead, agent silently switched to JSON-over-HTTP. This required a full redo.

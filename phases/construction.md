@@ -260,6 +260,21 @@ Handle each status:
 - **DONE_WITH_CONCERNS** → pass concern text to spec reviewer context for explicit attention.
 - **BLOCKED** → if blocked by another unit's output, redispatch with missing context. If blocked by environment issue, escalate to user.
 
+### Plan Deviation Check (after status aggregation)
+
+Before proceeding to review, verify builders didn't deviate from the design doc:
+
+For each builder report, check:
+1. **Technology match**: did the builder use the technology specified in the design doc? (e.g., plan says gRPC → builder used gRPC, not JSON-over-HTTP)
+2. **Scope match**: did the builder build only what was specified? (no extra features, no missing features)
+3. **Interface match**: do the interfaces match Interface Contracts?
+
+If ANY builder deviated from the plan's technology choices:
+- **STOP review**. Fix the deviation first.
+- Redispatch the builder with explicit instruction: "The plan specifies {X}. Use {X}, not {Y}. Add dependencies if needed."
+
+This check exists because agents optimize for simplicity and will silently substitute technologies when the codebase doesn't match assumptions.
+
 ### Merge Protocol (PARALLEL worktree mode only)
 
 After all parallel builders complete with DONE/DONE_WITH_CONCERNS:
