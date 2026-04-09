@@ -113,48 +113,45 @@ async function cmdSnapshot(flags: string[]): Promise<void> {
   const outputPath =
     flags.includes("-o") ? flags[flags.indexOf("-o") + 1] : "/tmp/aidlc-annotated.png";
 
-  // Build accessibility tree
-  const tree = await p.accessibility.snapshot({ interestingOnly: interactiveOnly });
-  if (!tree) {
-    console.log("(empty page)");
-    return;
+  // Build accessibility tree using ariaSnapshot (modern Playwright API)
+  const locator = interactiveOnly
+    ? p.locator("button, a, input, select, textarea, [role='button'], [role='link'], [tabindex]")
+    : p.locator("body");
+
+  let output: string;
+  try {
+    output = await locator.first().ariaSnapshot();
+  } catch {
+    // Fallback: get all interactive elements manually
+    const elements = await p.evaluate((interactiveOnly: boolean) => {
+      const selector = interactiveOnly
+        ? "button, a, input, select, textarea, [role='button'], [role='link']"
+        : "h1, h2, h3, p, button, a, input, select, textarea, img, [role]";
+      const els = document.querySelectorAll(selector);
+      return Array.from(els).map((el, i) => {
+        const tag = el.tagName.toLowerCase();
+        const role = el.getAttribute("role") || tag;
+        const name = el.getAttribute("aria-label") || el.textContent?.trim().slice(0, 50) || "";
+        const type = el.getAttribute("type") || "";
+        const placeholder = el.getAttribute("placeholder") || "";
+        return `@e${i + 1} [${role}]${type ? ` type="${type}"` : ""} "${name || placeholder}"`;
+      });
+    }, interactiveOnly);
+    output = elements.join("\n");
   }
 
-  let refCounter = 1;
+  // Build @ref map from output
   elementRefs.clear();
-
-  function printNode(node: any, indent: number): string {
-    const pad = "  ".repeat(indent);
-    const ref = `@e${refCounter++}`;
-    const role = node.role || "unknown";
-    const name = node.name ? ` "${node.name}"` : "";
-    const value = node.value ? ` value="${node.value}"` : "";
-    const extra: string[] = [];
-    if (node.level) extra.push(`level=${node.level}`);
-    if (node.checked !== undefined) extra.push(`checked=${node.checked}`);
-    if (node.disabled) extra.push("disabled");
-    const extraStr = extra.length ? ` [${extra.join(", ")}]` : "";
-
-    // Store ref -> accessible name for element targeting
-    if (node.name) {
-      elementRefs.set(ref, node.name);
+  let refCounter = 1;
+  for (const line of output.split("\n")) {
+    const nameMatch = line.match(/"([^"]+)"/);
+    if (nameMatch) {
+      elementRefs.set(`@e${refCounter}`, nameMatch[1]);
+      refCounter++;
     }
-
-    let line = `${pad}${ref} [${role}]${name}${value}${extraStr}`;
-    let result = line + "\n";
-
-    if (node.children) {
-      for (const child of node.children) {
-        result += printNode(child, indent + 1);
-      }
-    }
-    return result;
   }
-
-  const output = printNode(tree, 0);
 
   if (showDiff && snapshotBaseline) {
-    // Simple line diff
     const oldLines = snapshotBaseline.split("\n");
     const newLines = output.split("\n");
     const added = newLines.filter((l) => !oldLines.includes(l));
