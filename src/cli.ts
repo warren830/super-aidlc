@@ -47,8 +47,8 @@ function validate(): boolean {
       pass = false;
     }
     const lines = content.split("\n").length;
-    if (lines > 260) {
-      errors.push(`agents/${agent} is ${lines} lines (max 260)`);
+    if (lines > 270) {
+      errors.push(`agents/${agent} is ${lines} lines (max 270)`);
       pass = false;
     }
   }

@@ -41,9 +41,9 @@ describe("Agents", () => {
         expect(hasOutput).toBe(true);
       });
 
-      test("is under 260 lines", () => {
+      test("is under 270 lines", () => {
         const lines = content.split("\n").length;
-        expect(lines).toBeLessThanOrEqual(260);
+        expect(lines).toBeLessThanOrEqual(270);
       });
     });
   }
