@@ -1,0 +1,23 @@
+node_modules/
+dist/
+bun.lock
+.claude/
+.idea/
+
+# Symlink artifacts from install script
+agents/agents
+phases/phases
+guards/guards
+rules/rules
+extensions/extensions
+skills/skills
+skills/*/brainstorm
+skills/*/compound
+skills/*/compound-refresh
+skills/*/debug
+skills/*/design
+skills/*/janitor
+skills/*/metrics
+skills/*/qa
+skills/*/review
+skills/*/ship
