@@ -67,6 +67,7 @@ if [ "$VERIFY_ONLY" = true ]; then
   check_link "guards" "$SCRIPT_DIR/guards"
   check_link "rules" "$SCRIPT_DIR/rules"
   check_link "extensions" "$SCRIPT_DIR/extensions"
+  check_link "skills" "$SCRIPT_DIR/skills"
 
   if [ "$HEALTHY" = true ]; then
     echo "Installation healthy (v$VERSION)"
@@ -107,6 +108,7 @@ ln -sf "$SCRIPT_DIR/agents" "$SKILL_DIR/agents"
 ln -sf "$SCRIPT_DIR/guards" "$SKILL_DIR/guards"
 ln -sf "$SCRIPT_DIR/rules" "$SKILL_DIR/rules"
 ln -sf "$SCRIPT_DIR/extensions" "$SKILL_DIR/extensions"
+ln -sf "$SCRIPT_DIR/skills" "$SKILL_DIR/skills"
 
 if [ "$GLOBAL_INSTALL" = true ]; then
   echo "Installed super-aidlc v$VERSION globally to $SKILL_DIR"

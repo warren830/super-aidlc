@@ -5,8 +5,10 @@
     "moduleResolution": "bundler",
     "types": ["bun-types"],
     "strict": true,
+    "noUncheckedIndexedAccess": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "outDir": "./dist",
     "rootDir": "."
   },

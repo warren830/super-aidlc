@@ -103,9 +103,9 @@ describe("Browse tool", () => {
     const count = await page!.evaluate("document.querySelectorAll('input').length");
     expect(count).toBe(1);
 
-    // Accessibility tree
-    const tree = await page!.accessibility.snapshot({ interestingOnly: true });
-    expect(tree).not.toBeNull();
+    // Accessibility tree (using modern ariaSnapshot API)
+    const tree = await page!.locator("body").ariaSnapshot();
+    expect(tree).toBeTruthy();
   });
 
   afterAll(async () => {

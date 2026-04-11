@@ -255,7 +255,7 @@ Ship:          Commit → Push → PR
 Compound:      Score session → auto-extract if valuable → aidlc-docs/solutions/
 ```
 
-### 15 Agents
+### 18 Agents
 
 | Agent | Role |
 |-------|------|
@@ -282,7 +282,7 @@ Compound:      Score session → auto-extract if valuable → aidlc-docs/solutio
 
 ```
 super-aidlc/
-  VERSION                           # 4.0.0
+  VERSION                           # 4.1.0
   SKILL.md                          # Entry point
   phases/                           # brainstorm, inception, construction, operations
   agents/                           # 18 specialized agents

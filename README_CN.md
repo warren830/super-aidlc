@@ -252,7 +252,7 @@ Ship:          提交 → 推送 → PR
 Compound:      评分 → 高价值自动提取 → aidlc-docs/solutions/
 ```
 
-### 12 个 Agent
+### 18 个 Agent
 
 | Agent | 职责 |
 |-------|------|
@@ -264,18 +264,22 @@ Compound:      评分 → 高价值自动提取 → aidlc-docs/solutions/
 | Builder | TDD 构建 + 自检协议 |
 | Design Reviewer | 独立设计审查（Heavy）|
 | Spec Reviewer | 第一阶段：做的是要求的吗？ |
+| Quality Reviewer | 第二阶段：总体质量门槛 |
 | Correctness Reviewer | 逻辑错误、边界条件、状态 bug |
 | Security Reviewer | 漏洞、利用、OWASP |
 | Performance Reviewer | N+1、内存、可扩展性 |
+| Maintainability Reviewer | 耦合度、复杂度、命名、死代码 |
+| Reliability Reviewer | 错误处理、重试、超时、故障模式 |
+| API Contract Reviewer | 破坏性变更、响应结构、版本控制 |
 | Adversarial Reviewer | 故障场景、攻击向量 |
-
-另有：Quality Reviewer（总体门槛）、QA Agent、Debugger。
+| QA Agent | 浏览器/API/CLI 测试（真实 Chromium）|
+| Debugger | 根因分析（四阶段调查）|
 
 ## 项目结构
 
 ```
 super-aidlc/
-  VERSION                           # 4.0.0
+  VERSION                           # 4.1.0
   SKILL.md                          # 入口
   phases/                           # brainstorm, inception, construction, operations
   agents/                           # 18 个专项 agent

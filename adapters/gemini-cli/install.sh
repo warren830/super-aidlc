@@ -33,7 +33,7 @@ fi
 if [ "$VERIFY_ONLY" = true ]; then
   echo "Verifying super-aidlc Gemini CLI installation at $SKILL_DIR..."
   HEALTHY=true
-  for item in SKILL.md phases agents guards rules extensions; do
+  for item in SKILL.md phases agents guards rules extensions skills; do
     if [ -e "$SKILL_DIR/$item" ]; then
       echo "  OK  $item"
     else
@@ -63,6 +63,7 @@ ln -sf "$SCRIPT_DIR/agents" "$SKILL_DIR/agents"
 ln -sf "$SCRIPT_DIR/guards" "$SKILL_DIR/guards"
 ln -sf "$SCRIPT_DIR/rules" "$SKILL_DIR/rules"
 ln -sf "$SCRIPT_DIR/extensions" "$SKILL_DIR/extensions"
+ln -sf "$SCRIPT_DIR/skills" "$SKILL_DIR/skills"
 
 echo "Installed super-aidlc v$VERSION for Gemini CLI to $SKILL_DIR"
 echo "To use: reference .gemini/skills/super-aidlc/SKILL.md in your GEMINI.md"

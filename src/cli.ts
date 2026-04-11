@@ -56,24 +56,50 @@ function validate(): boolean {
   // Check version consistency
   const version = getVersion();
   if (existsSync(join(ROOT, ".claude-plugin/plugin.json"))) {
-    const pluginJson = JSON.parse(
-      readFileSync(join(ROOT, ".claude-plugin/plugin.json"), "utf-8")
-    );
-    if (pluginJson.version !== version) {
-      errors.push(
-        `Version mismatch: VERSION=${version}, plugin.json=${pluginJson.version}`
+    try {
+      const pluginJson = JSON.parse(
+        readFileSync(join(ROOT, ".claude-plugin/plugin.json"), "utf-8")
       );
+      if (pluginJson.version !== version) {
+        errors.push(
+          `Version mismatch: VERSION=${version}, plugin.json=${pluginJson.version}`
+        );
+        pass = false;
+      }
+    } catch {
+      errors.push("Invalid JSON in .claude-plugin/plugin.json");
       pass = false;
     }
   }
   if (existsSync(join(ROOT, "package.json"))) {
-    const packageJson = JSON.parse(
-      readFileSync(join(ROOT, "package.json"), "utf-8")
-    );
-    if (packageJson.version !== version) {
-      errors.push(
-        `Version mismatch: VERSION=${version}, package.json=${packageJson.version}`
+    try {
+      const packageJson = JSON.parse(
+        readFileSync(join(ROOT, "package.json"), "utf-8")
       );
+      if (packageJson.version !== version) {
+        errors.push(
+          `Version mismatch: VERSION=${version}, package.json=${packageJson.version}`
+        );
+        pass = false;
+      }
+    } catch {
+      errors.push("Invalid JSON in package.json");
+      pass = false;
+    }
+  }
+  if (existsSync(join(ROOT, ".cursor-plugin/plugin.json"))) {
+    try {
+      const cursorJson = JSON.parse(
+        readFileSync(join(ROOT, ".cursor-plugin/plugin.json"), "utf-8")
+      );
+      if (cursorJson.version !== version) {
+        errors.push(
+          `Version mismatch: VERSION=${version}, .cursor-plugin/plugin.json=${cursorJson.version}`
+        );
+        pass = false;
+      }
+    } catch {
+      errors.push("Invalid JSON in .cursor-plugin/plugin.json");
       pass = false;
     }
   }
@@ -116,15 +142,20 @@ function parseMetricsFromBuildLog(path: string): SessionMetrics | null {
   if (metricsSection) {
     const lines = metricsSection[1];
     const extract = (key: string) => {
-      const m = lines.match(new RegExp(`${key}:\\s*(.+)`));
+      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const m = lines.match(new RegExp(`${escaped}:\\s*(.+)`));
       return m ? m[1].trim() : undefined;
     };
     metrics.complexity = extract("Complexity");
     metrics.strategy = extract("Strategy");
-    metrics.testCount = parseInt(extract("Test count") || "0") || undefined;
-    metrics.issueCount = parseInt(extract("Issues encountered") || "0") || undefined;
-    metrics.verifyIterations = parseInt(extract("Verify iterations") || "0") || undefined;
-    metrics.compoundScore = parseInt(extract("Compound score") || "0") || undefined;
+    const tryInt = (v: string | undefined): number | undefined => {
+      const n = parseInt(v || "");
+      return Number.isNaN(n) ? undefined : n;
+    };
+    metrics.testCount = tryInt(extract("Test count"));
+    metrics.issueCount = tryInt(extract("Issues encountered"));
+    metrics.verifyIterations = tryInt(extract("Verify iterations"));
+    metrics.compoundScore = tryInt(extract("Compound score"));
     metrics.compoundAction = extract("Compound action");
   }
 
@@ -215,7 +246,8 @@ switch (command) {
     break;
   case "metrics": {
     const daysFlag = args.find((a) => a.startsWith("--days="));
-    const days = daysFlag ? parseInt(daysFlag.split("=")[1]) : 30;
+    const parsed = daysFlag ? parseInt(daysFlag.split("=")[1]) : NaN;
+    const days = Number.isNaN(parsed) || parsed <= 0 ? 30 : parsed;
     metrics(days);
     break;
   }

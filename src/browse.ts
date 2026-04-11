@@ -10,12 +10,13 @@
  *   super-aidlc-browse screenshot /tmp/shot.png
  */
 
-import { chromium, type Browser, type Page, type BrowserContext } from "playwright-core";
+import { chromium, type Browser, type Page, type BrowserContext, type ConsoleMessage } from "playwright-core";
 import { existsSync } from "fs";
 import { join } from "path";
+import { tmpdir } from "os";
 
 // State file for persistent browser across commands
-const STATE_DIR = join(process.env.HOME || "/tmp", ".aidlc");
+const STATE_DIR = join(process.env.HOME || tmpdir(), ".aidlc");
 const STATE_FILE = join(STATE_DIR, "browse-state.json");
 
 interface BrowseState {
@@ -111,7 +112,7 @@ async function cmdSnapshot(flags: string[]): Promise<void> {
   const showDiff = flags.includes("-D");
   const annotate = flags.includes("-a");
   const outputPath =
-    flags.includes("-o") ? flags[flags.indexOf("-o") + 1] : "/tmp/aidlc-annotated.png";
+    flags.includes("-o") ? flags[flags.indexOf("-o") + 1] : join(tmpdir(), "aidlc-annotated.png");
 
   // Build accessibility tree using ariaSnapshot (modern Playwright API)
   const locator = interactiveOnly
@@ -190,7 +191,7 @@ async function cmdFill(selector: string, value: string): Promise<void> {
 
 async function cmdScreenshot(args: string[]): Promise<void> {
   const p = await ensureBrowser();
-  const path = args[0] || "/tmp/aidlc-screenshot.png";
+  const path = args[0] || join(tmpdir(), "aidlc-screenshot.png");
   const fullPage = !args.includes("--viewport");
   await p.screenshot({ path, fullPage });
   console.log(`Screenshot: ${path}`);
@@ -213,7 +214,7 @@ async function cmdConsole(flags: string[]): Promise<void> {
 
   // Collect console messages for 2 seconds
   const messages: string[] = [];
-  const handler = (msg: any) => {
+  const handler = (msg: ConsoleMessage) => {
     const type = msg.type();
     if (errorsOnly && type !== "error" && type !== "warning") return;
     messages.push(`[${type}] ${msg.text()}`);
@@ -294,7 +295,12 @@ async function cmdIs(prop: string, selector: string): Promise<void> {
 
 async function cmdViewport(size: string): Promise<void> {
   const p = await ensureBrowser();
-  const [w, h] = size.split("x").map(Number);
+  const parts = (size || "").split("x").map(Number);
+  const [w, h] = parts;
+  if (parts.length !== 2 || Number.isNaN(w) || Number.isNaN(h) || w <= 0 || h <= 0) {
+    console.error(`Invalid viewport size: "${size}". Expected format: WIDTHxHEIGHT (e.g. 1280x720)`);
+    process.exit(1);
+  }
   await p.setViewportSize({ width: w, height: h });
   console.log(`Viewport: ${w}x${h}`);
 }
@@ -416,7 +422,7 @@ Commands:
         await cmdViewport(args[1]);
         break;
       case "responsive":
-        await cmdResponsive(args[1] || "/tmp/aidlc-responsive");
+        await cmdResponsive(args[1] || join(tmpdir(), "aidlc-responsive"));
         break;
       case "js":
         await cmdJs(args.slice(1).join(" "));
@@ -432,8 +438,9 @@ Commands:
         console.error(`Unknown command: ${cmd}`);
         process.exit(1);
     }
-  } catch (err: any) {
-    console.error(`Error: ${err.message}`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`Error: ${message}`);
     await closeBrowser();
     process.exit(1);
   }
