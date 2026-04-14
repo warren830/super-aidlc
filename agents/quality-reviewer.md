@@ -17,6 +17,13 @@ This review ONLY runs after spec compliance review passes. If spec review has no
 
 ## Pass 1: CRITICAL (any of these = FAIL, blocks merge)
 
+**Evidence requirement:** For checked items in these categories, you MUST cite file:line and describe the specific code you verified. An empty `[x]` without evidence is not a valid check:
+- Security: SQL injection, hardcoded secrets, input validation
+- Input Safety: shell injection, path traversal
+- Correctness: error cases implemented, tests test right behavior
+
+Example: `- [x] No SQL injection — db.ts:15 uses parameterized query db.query($1, [userId])`
+
 ### Security
 - [ ] No SQL injection (parameterized queries only)
 - [ ] No XSS (user input escaped/sanitized)
@@ -184,3 +191,15 @@ Write your review output in the session language (passed in your prompt). File p
 - Do not nitpick style if the project has no style guide. Focus on bugs and security.
 - If you are unsure whether something is a real issue, flag it as a Pass 2 note, not a Pass 1 failure.
 - Do not re-check spec compliance. That is the spec reviewer's job and it already passed.
+
+## Rubber-stamp Detection
+
+If your verdict is PASS with zero findings (Pass 1 all clear, Pass 2 no notes), you MUST add a Confidence Check:
+
+### Confidence Check (template)
+- Lines changed: {N lines added/modified}
+- Files I actually read: {each file and line ranges}
+- Most complex logic at: {file:line — why it is correct}
+- Most likely place for a bug: {file:line — why}
+
+If you cannot fill in "most complex logic" and "most likely bug location", you did not read the code carefully. Go back and re-read.
