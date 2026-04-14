@@ -330,6 +330,29 @@ If all units are fully independent (no cross-unit calls), write "None -- all uni
 
 Mark which units can run in parallel. This drives the build phase.
 
+### Per-Unit Specifications
+
+For each unit in the table above, add a detail section:
+
+#### {Unit Name}
+
+**Acceptance Criteria:**
+1. GIVEN {precondition} WHEN {action} THEN {expected result}
+2. ...
+
+At least 3 criteria per unit. Each must be specific and testable. Use GIVEN/WHEN/THEN format -- vague descriptions like "handle auth" are not acceptable.
+
+**Required Test Scenarios:**
+- Happy path: {specific scenario}
+- Error: {specific error scenario, reference Error/Rescue Map rows owned by this unit}
+- Edge: {boundary value, invalid input, or concurrent access scenario}
+- Integration: {cross-unit interaction, if applicable -- reference Interface Contracts}
+
+**Done means:**
+- All acceptance criteria have individual passing tests
+- Error/Rescue Map rows owned by this unit are implemented
+- Interface Contracts provided by this unit match signatures exactly
+
 ### Shared Utilities (optional)
 
 If multiple units will need the same helper (e.g., path validation, error formatting, config parsing), list them here. These should be built first (as Unit 0, sequential) before parallel units start, to avoid duplication.
@@ -360,7 +383,7 @@ For each key decision above, record what was rejected:
 1. ASCII architecture diagram
 2. Error/Rescue Map (5+ rows)
 3. Interface Contracts (if units have cross-unit dependencies)
-4. Units of Work table with parallelism markings
+4. Units of Work table with parallelism markings AND per-unit specifications (Acceptance Criteria, Required Test Scenarios, Done means)
 5. Decisions Log
 6. Alternatives Considered (at least for architecture and storage decisions)
 
