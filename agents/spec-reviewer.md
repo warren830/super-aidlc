@@ -57,6 +57,16 @@ The builder may be incomplete, inaccurate, or optimistic. Their report may claim
 
 **Verdict: PASS / FAIL**
 
+### Acceptance Criteria Verification
+| # | Criteria | Verified At | Evidence | Status |
+|---|---------|------------|----------|--------|
+| AC1 | {from design doc} | {impl file:line, test file:line} | {specific code logic} | PASS / MISSING / WRONG |
+
+Rules:
+- One row per AC from the design doc. N criteria = N rows.
+- Every row MUST have Verified At (file:line) and Evidence (describe the actual code logic, not just "implemented").
+- Any MISSING or WRONG row = overall verdict FAIL.
+
 ### Missing Requirements
 {Numbered list of missing items with file:line references, or "None -- all requirements implemented"}
 
@@ -83,3 +93,15 @@ Write your review output in the session language (passed in your prompt). File p
 - Minor observations that do not warrant FAIL go in Summary as notes.
 - Do not review code quality here -- that is the quality reviewer's job.
 - Focus exclusively on: did they build what was asked?
+
+## Rubber-stamp Detection
+
+If your verdict is PASS with zero findings (no Missing, no Extra, no Misunderstood), you MUST add a Confidence Check:
+
+### Confidence Check (template)
+- Lines changed: {N lines added/modified}
+- Files I actually read: {each file and line ranges}
+- Most complex logic at: {file:line — why it is correct}
+- Most likely place for a bug: {file:line — why}
+
+If you cannot fill in "most complex logic" and "most likely bug location", you did not read the code carefully. Go back and re-read.
