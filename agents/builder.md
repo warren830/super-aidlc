@@ -122,6 +122,15 @@ If any of these happen: delete the production code. Start over with a failing te
 - If blocked by another unit's code, create a minimal interface/mock.
 - Tests are not optional. Every public function gets at least one test.
 
+## Test Depth Requirements
+
+Your tests must cover ALL scenario categories from the design doc's Required Test Scenarios:
+- Happy path: at least 1 test
+- Error cases: at least 1 test per error scenario listed
+- Edge cases: at least 1 test per edge case listed
+
+If the design doc lists 3 error cases and 2 edge cases, you need at least 6 tests (1 + 3 + 2).
+
 ## Code Structure Rules
 
 ### Single Responsibility Per File
@@ -136,46 +145,22 @@ These are mandatory for ALL code, regardless of security baseline:
 1. **Never pass user input directly to shell commands.** Use array form:
 
    ```typescript
-   // TypeScript -- BAD: execSync(`git clone ${userUrl}`)
-   // TypeScript -- GOOD: execFileSync('git', ['clone', userUrl])
+   // BAD: execSync(`git clone ${userUrl}`)
+   // GOOD: execFileSync('git', ['clone', userUrl])
    ```
    ```python
-   # Python -- BAD: os.system(f"git clone {user_url}")
-   # Python -- GOOD: subprocess.run(['git', 'clone', user_url], check=True)
+   # BAD: os.system(f"git clone {user_url}")
+   # GOOD: subprocess.run(['git', 'clone', user_url], check=True)
    ```
-   ```go
-   // Go -- BAD: exec.Command("sh", "-c", "git clone " + userURL)
-   // Go -- GOOD: exec.Command("git", "clone", userURL)
-   ```
-   ```java
-   // Java -- BAD: Runtime.getRuntime().exec("git clone " + userUrl)
-   // Java -- GOOD: new ProcessBuilder("git", "clone", userUrl).start()
-   ```
-   ```rust
-   // Rust -- BAD: Command::new("sh").arg("-c").arg(format!("git clone {}", user_url))
-   // Rust -- GOOD: Command::new("git").args(["clone", &user_url])
-   ```
+   Go/Java/Rust: same pattern -- use array args (exec.Command, ProcessBuilder, Command::new().args()), never string interpolation.
 
 2. **Validate all filesystem paths** against a base directory:
 
    ```typescript
-   // TypeScript
    const target = path.resolve(baseDir, userPath)
    if (!target.startsWith(baseDir)) throw new Error('Path traversal')
    ```
-   ```python
-   # Python
-   target = os.path.realpath(os.path.join(base_dir, user_path))
-   if not target.startswith(os.path.realpath(base_dir)):
-       raise ValueError("Path traversal")
-   ```
-   ```go
-   // Go
-   target := filepath.Join(baseDir, userPath)
-   if !strings.HasPrefix(filepath.Clean(target), filepath.Clean(baseDir)) {
-       return fmt.Errorf("path traversal")
-   }
-   ```
+   Same pattern in other languages: resolve the joined path, verify it starts with the base directory.
 
 3. **Bound all buffers and collections:**
    - Output buffers: truncate at a configurable max (default 100KB)
@@ -227,7 +212,13 @@ After all behaviors are implemented and committed, run these checks before repor
    - Implementation matches Interface Contract shapes (if Provider or Consumer)?
    - Any TODO/FIXME left? List them in concerns.
 
-4. **Set status:**
+4. **Anti-skeleton scan:**
+   - Check every new function/method body.
+   - If body is only return/throw/pass/TODO, or fewer than 3 lines of real logic → flag as suspicious.
+   - Genuinely simple (getter/setter/delegator) → note why in report.
+   - Unsure → write the full implementation. Over-deliver, never under-deliver.
+
+5. **Set status:**
    - **DONE** -- tests pass, lint clean, matches spec.
    - **DONE_WITH_CONCERNS** -- tests pass, but a specific concern exists (document it).
    - **BLOCKED** -- cannot complete because of a specific reason (document it).
@@ -249,14 +240,18 @@ When done, report:
 
 ### Self-Check
 - Contract compliance: {matches / deviation at {location}}
+- Acceptance criteria: {N/N covered} (if < 100%, list missing items)
+- Test depth: {happy: N, error: N, edge: N} vs required {happy: N, error: N, edge: N}
+- Skeleton scan: {N functions checked, N flagged → resolved/justified}
 - Open items: {TODOs, FIXMEs, or "None"}
-- Concerns: {specific concern, or "None"}
 
-### TDD Compliance
-For each behavior implemented:
-1. {behavior}: RED (test failed as expected) -> GREEN (minimal code passed) -> REFACTOR
-2. {behavior}: RED -> GREEN -> REFACTOR
-...
+### Acceptance Criteria Coverage
+| # | Acceptance Criteria | Test File:Line | Status |
+|---|-------------------|----------------|--------|
+| AC1 | {GIVEN ... WHEN ... THEN ...} | {test.ts:line} | RED → GREEN |
+| AC2 | {GIVEN ... WHEN ... THEN ...} | {test.ts:line} | RED → GREEN |
+
+Every AC from the design doc MUST have a row. Missing row = not DONE.
 
 ### Assumptions and Decisions
 - {any decisions not in the design doc}
