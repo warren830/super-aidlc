@@ -499,4 +499,6 @@ Ask: "Does this design look right? Any changes before I start building?"
 
 ## Step 6: Proceed to Build
 
-When design is approved, read `phases/construction.md` and execute.
+When design is approved:
+- If `--auto` flag is set: STOP here. Return control to the main orchestrator (SKILL.md) which will dispatch construction as a fresh subagent.
+- Otherwise: read `phases/construction.md` and execute.
