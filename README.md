@@ -90,7 +90,7 @@ This is the main entry point. It auto-detects complexity and routes:
 | **Medium** | New feature, moderate scope | Questions → design doc → parallel build → review → verify |
 | **Heavy** | New system, multi-component | Brainstorm → research → full design → parallel worktree builds → specialist review → verify |
 
-**Flags:** `--light` `--medium` `--heavy` (force complexity), `--dry-run` (preview), `--lang=zh` (Chinese docs), `--skip-review` (escape hatch)
+**Flags:** `--light` `--medium` `--heavy` (force complexity), `--dry-run` (preview), `--lang=zh` (Chinese docs), `--skip-review` (escape hatch), `--auto` (fully automated after design approval)
 
 #### Before Building
 
@@ -211,6 +211,19 @@ aidlc-docs/                              # Per-project (auto-created)
 /super-aidlc:metrics --days=30             # are we improving?
 ```
 
+**Fully automated (`--auto`):**
+```
+/super-aidlc --auto add rate limiting with Redis backend
+→ inception: asks questions, produces design doc (interactive)
+→ user approves design
+→ [AUTO] construction runs as fresh subagent (isolated context)
+→ [AUTO] gate check: all units DONE? reviews PASS? tests green?
+→ [AUTO] operations runs as fresh subagent (verification + commit)
+→ asks user about push/PR (irreversible actions always need confirmation)
+```
+
+Auto mode solves context degradation in long sessions. Each stage runs in a fresh subagent so no agent accumulates stale context. Green = auto-proceed, red = pause for human.
+
 ### Updating
 
 ```bash
@@ -236,6 +249,14 @@ Note: `aidlc-docs/` in your project is NOT removed -- it contains your design do
 3. **No completion claims without evidence.** "Should work" is not evidence.
 4. **No shipping without all-green verification.** Auto-fix up to 3 times.
 5. **No unsanitized input to shell/filesystem/templates.** Security is default-on.
+
+## Anti-Laziness System (v4.2)
+
+Three layers prevent AI agents from cutting corners:
+
+1. **Richer Unit Specs** -- each unit in the design doc has GIVEN/WHEN/THEN acceptance criteria, required test scenarios (happy/error/edge), and explicit "Done means" definition.
+2. **Builder Self-Discipline** -- builders must produce an Acceptance Criteria Coverage table mapping each AC to its test (file:line), meet minimum test depth requirements, and pass an anti-skeleton scan.
+3. **Reviewer Depth Enforcement** -- spec reviewers verify each AC with file:line evidence. Quality reviewers must cite code for key security/correctness checks. Zero-finding PASS triggers a mandatory Confidence Check proving the reviewer actually read the code.
 
 ## Architecture
 
