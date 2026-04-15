@@ -41,6 +41,38 @@ Skip any step = claim is invalid.
 | Regression test works | Red-green cycle verified | Test passes once |
 | Agent completed | VCS diff shows changes | Agent reports "success" |
 | Requirements met | Line-by-line checklist | Tests passing |
+| **Feature works** | **Golden path E2E: input → expected output** | **UI renders, screenshot looks right** |
+| **Integration works** | **Data flows end-to-end: A → B → C → result** | **A connects to B (but B → C untested)** |
+
+## Functional Verification (v4.2)
+
+For any feature that has a user-facing flow (UI, API, CLI), verification MUST include:
+
+1. **Identify the golden path** — the primary user scenario (e.g., "user sends message, gets response")
+2. **Test the FULL path** — not just the first step. If the flow is A → B → C → D, test that D actually happens.
+3. **Test with real data** — not mocks, not stubs. If the feature talks to an API, call the real API.
+4. **Verify the OUTPUT** — not just the absence of errors. "No errors" ≠ "feature works".
+
+### The Screenshot Trap
+
+Screenshots prove the UI rendered. They do NOT prove:
+- Buttons work when clicked
+- Data flows through the backend
+- WebSocket connections stay alive
+- API responses contain correct data
+- The feature does what it's supposed to do
+
+**A screenshot of a dashboard with data is NOT proof that the dashboard is functional.**
+You must verify: click → action → result → displayed correctly.
+
+### E2E Test Requirements for UI Features
+
+If the feature has a UI, the E2E test MUST include:
+- User action (click, type, submit)
+- Backend processing (API call, agent response)
+- Result displayed (response appears in UI, state updates)
+
+If any step in the chain is not verified, the feature is NOT verified.
 
 ## Red Flags - STOP
 

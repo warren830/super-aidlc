@@ -35,6 +35,25 @@ If the agent is about to skip ANY of these, it is overconfident. Every skip requ
 | "Tests passed earlier, should still pass" | Nothing changed | You do not know what changed. Run them. |
 | "Build succeeded before this change" | Small change | Small changes break builds. Verify. |
 | "Already verified manually" | Checked the output | Manual checks miss what automated checks catch. |
+| "Screenshot looks right" | UI rendered correctly | Screenshot proves rendering, not functionality. Data may not flow. |
+| "API returns 200" | Endpoint responds | 200 with empty data ≠ feature works. Verify the payload. |
+| "Connection established" | WebSocket connected | Connection without data flow = useless pipe. Send data, verify receipt. |
+| "E2E test passed" | Playwright succeeded | If E2E only checks UI text, not user actions + backend response, it proves nothing. |
+
+### The Integration Gap (v4.2)
+
+The most dangerous overconfidence pattern for multi-component systems:
+
+```
+BUILT: Component A (compiles ✓) + Component B (compiles ✓) + Component C (compiles ✓)
+CLAIMED: "System works" because each component compiles
+REALITY: A never sends data to B. B never sends data to C. The system does nothing.
+```
+
+**Every connection between components must be tested with real data flowing through it.**
+If A talks to B talks to C, you must verify: A sends → B receives → B sends → C receives → C produces output.
+
+Compile + render + connect ≠ functional. Data must flow.
 
 ## The Keyword Trap
 
@@ -63,6 +82,9 @@ Before completing ANY phase (inception, construction, operations), the agent MUS
 - [ ] Both spec and quality reviews ran (not skipped)
 - [ ] Full test suite passes NOW (not "passed earlier")
 - [ ] Lint passes NOW (not "should be clean")
+- [ ] **Golden path verified** — the primary user scenario works end-to-end with real data
+- [ ] **Integration paths verified** — data flows between all connected components (not just "connected")
+- [ ] **If UI: user action → backend → result displayed** (not just "UI renders")
 
 ### End of Operations
 - [ ] Test suite ran with exit code 0 (evidence, not claim)
