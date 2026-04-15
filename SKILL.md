@@ -22,6 +22,7 @@ Super-AIDLC supports these flags in the user's input:
 | `--skip-review` | Skip two-stage review (only for trusted fixes like typos) |
 | `--skip-tests` | Skip TDD requirement (only for non-code changes like docs/config) |
 | `--no-security` | Disable security baseline |
+| `--auto` | After design approval, auto-run construction + operations with fresh subagent isolation |
 | `--lang=zh` | Generate all artifacts in Chinese (中文) |
 | `--lang=en` | Generate all artifacts in English (default) |
 | `--lang=ja` | Generate all artifacts in Japanese (日本語) |
@@ -350,6 +351,79 @@ Wait for confirmation.
 **Light**: Read `phases/construction.md` and execute.
 **Medium/Heavy**: Read `phases/inception.md` and execute. It will tell you when to proceed to construction.
 **Heavy with high ambiguity**: If the task description is vague ("build something like...", "I want to improve..."), suggest brainstorm first: "This task has high ambiguity. Want to run a brainstorm phase first to clarify requirements? (y/n)". If yes, read `phases/brainstorm.md` and execute. Its output feeds directly into inception.
+
+### Auto Mode (`--auto`)
+
+When `--auto` is set and inception completes (design approved), do NOT read `phases/construction.md` inline. Instead, dispatch the full construction + operations pipeline as fresh subagents.
+
+**Construction (fresh subagent):**
+
+```
+Agent(
+  prompt: "<phases/construction.md full content>
+  --- Design Document ---
+  <aidlc-docs/{date}-{slug}/design.md full content>
+  --- Project Context ---
+  <CLAUDE.md> + <Researcher summary if brownfield>
+  --- Rules ---
+  <rules/tdd.md> + <extensions/security-baseline.md if enabled>
+  --- Config ---
+  Language: {session language}
+  Complexity: {complexity}
+  Auto mode: true — proceed without asking user for confirmation.
+  Write all results to aidlc-docs/{date}-{slug}/build-log.md.",
+  description: "Auto construction: {feature name}"
+)
+```
+
+**Gate check (inline — read build log, verify all green):**
+
+1. All units DONE or DONE_WITH_CONCERNS?
+2. Spec review PASS?
+3. Quality review PASS?
+4. Verification loop all green?
+
+- ALL PASS → output status report, proceed to operations.
+- ANY FAIL → output problem details, wait for user input.
+
+```
+[AUTO] Construction complete
+  Units: {N/N} DONE | Tests: {N} passing | Spec: PASS | Quality: PASS
+  Proceeding to operations...
+```
+
+If problems found:
+```
+[AUTO] Construction needs attention
+  {problem details}
+  Options: (A) Retry  (B) Skip and proceed  (C) Abort auto, switch to interactive
+```
+
+**Operations (fresh subagent):**
+
+```
+Agent(
+  prompt: "<phases/operations.md full content>
+  --- Build Results ---
+  <aidlc-docs/{date}-{slug}/build-log.md full content>
+  --- Config ---
+  Auto mode: true — auto-commit on all-green, do not ask for ship confirmation.
+  Append verification results to build-log.md.",
+  description: "Auto operations: {feature name}"
+)
+```
+
+**Final report:**
+
+- ALL GREEN → output report, auto-compound if score >= 3, ask about push/PR (push is irreversible — always ask).
+- FAIL → output errors, wait for user.
+
+```
+[AUTO] All complete
+  Verification: PASS | Tests: {N} passing | Commit: {sha}
+  Compound score: {N} → {auto-compounding / suggested / skipped}
+  Push and create PR? (y/n)
+```
 
 ## Interruption Protocol
 
