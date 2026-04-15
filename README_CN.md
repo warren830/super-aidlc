@@ -90,7 +90,7 @@ claude
 | **Medium** | 新功能、中等范围 | 提问 → 设计 → 并行构建 → 审查 → 验证 |
 | **Heavy** | 新系统、多组件 | 探索 → 研究 → 完整设计 → worktree 并行 → 专项审查 → 验证 |
 
-**标志：** `--light` `--medium` `--heavy`（强制复杂度）、`--dry-run`（预览）、`--lang=zh`（中文文档）、`--skip-review`（跳过审查）
+**标志：** `--light` `--medium` `--heavy`（强制复杂度）、`--dry-run`（预览）、`--lang=zh`（中文文档）、`--skip-review`（跳过审查）、`--auto`（设计批准后全自动）
 
 #### 构建之前
 
@@ -208,6 +208,19 @@ aidlc-docs/                              # 每个项目（自动创建）
 /super-aidlc:metrics --days=30             # 我们在进步吗？
 ```
 
+**全自动模式（`--auto`）：**
+```
+/super-aidlc --auto 给 API 加上基于 Redis 的限流
+→ inception：提问、生成设计文档（交互式）
+→ 用户批准设计
+→ [AUTO] construction 作为独立 subagent 运行（隔离 context）
+→ [AUTO] 质量门检查：所有单元 DONE？审查 PASS？测试全绿？
+→ [AUTO] operations 作为独立 subagent 运行（验证 + 提交）
+→ 询问用户是否推送/PR（不可逆操作始终需要确认）
+```
+
+Auto 模式解决长 session 中的 context 退化问题。每个阶段在 fresh subagent 中运行，没有 agent 会积累过时的 context。绿灯自动过，红灯停车等人。
+
 ### 更新
 
 ```bash
@@ -233,6 +246,14 @@ cd ~/super-aidlc && git pull
 3. **没有证据就没有完成声明。** "应该能行"不是证据。
 4. **没有全绿验证就没有发布。** 失败自动修复最多 3 次。
 5. **没有消毒就不能让用户输入进入 shell/文件系统/模板。** 安全默认开启。
+
+## 防偷懒系统（v4.2）
+
+三层机制防止 AI agent 偷工减料：
+
+1. **更丰富的 Unit 描述** -- 设计文档中每个 unit 必须有 GIVEN/WHEN/THEN 验收标准、必需测试场景（正常/错误/边界）、以及明确的 "Done means" 定义。
+2. **Builder 自律机制** -- builder 必须产出验收标准覆盖表，将每条 AC 映射到对应测试（file:line），满足最低测试深度要求，并通过骨架代码检测。
+3. **Reviewer 深度强制** -- spec reviewer 必须对每条 AC 提供 file:line 验证证据。quality reviewer 必须对关键安全/正确性检查项引用具体代码。零发现的 PASS 触发强制 Confidence Check，证明 reviewer 确实读了代码。
 
 ## 架构
 
