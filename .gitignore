@@ -25,3 +25,6 @@ skills/*/metrics
 skills/*/qa
 skills/*/review
 skills/*/ship
+skills/*/tdd
+skills/*/verify
+skills/*/worktree

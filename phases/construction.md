@@ -178,6 +178,8 @@ This prevents the "subagent amnesia" problem where each agent starts fresh.
 
 ### PARALLEL Mode (with Worktree-First Fallback)
 
+> See `skills/worktree/SKILL.md` for the full worktree model (when they are used, failure modes, merge protocol, cleanup). This section is the dispatch mechanics.
+
 All agents dispatched in a SINGLE message for true parallelism.
 
 **Phase 1: Worktree dispatch (preferred)**
@@ -397,6 +399,8 @@ If coverage tooling is not available, note it in the build log and proceed.
 
 ## Step 6: Auto-Verification Loop
 
+> Before starting this loop, read `skills/verify/SKILL.md`. Each iteration's "pass" claim must quote the command's exit code and relevant output lines. "Should pass now" and "looks correct" are not acceptable.
+
 After all units pass review and coverage audit, run the verification loop.
 
 ### Checkpoint (before verification)
@@ -541,6 +545,15 @@ Append to `aidlc-docs/{date}-{feature-slug}/build-log.md` (in the session langua
 - Design approved: {timestamp or "auto-proceed for Light complexity"}
 - Security baseline: {enabled / skipped (reason)}
 - Ship approved: {timestamp or "pending"}
+
+## Iron Law Bypasses
+
+{List any explicit bypasses of TDD, verification, or review Iron Laws. Write "None" if the standard path was followed. Each bypass needs a specific reason -- not "it was a small change". See `skills/tdd/`, `skills/verify/`, and `skills/review/` for the Iron Laws being bypassed.}
+
+| Flag | Scope (files/units) | Reason |
+|------|---------------------|--------|
+| --skip-tests | {which files/units did not get TDD} | {specific reason, e.g. "README-only change", "generated code"} |
+| --skip-review | {which files/units bypassed review} | {specific reason, e.g. "single-line typo fix in doc"} |
 
 ## Alternatives Considered
 See design doc for architecture/storage alternatives. Add any NEW alternatives discovered during build:

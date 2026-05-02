@@ -1,108 +1,107 @@
 import { describe, test, expect, afterAll } from "bun:test";
 import { resolve, join } from "path";
 import { mkdirSync, writeFileSync, rmSync, readFileSync } from "fs";
+import {
+  getVersion,
+  validate,
+  parseDays,
+  computeMetrics,
+  formatValidateOutput,
+  formatMetricsOutput,
+  formatHelp,
+} from "../src/cli";
 
 const ROOT = resolve(import.meta.dir, "..");
-const CLI = resolve(ROOT, "src/cli.ts");
-
-async function runCli(args: string[]): Promise<{
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-}> {
-  const proc = Bun.spawn(["bun", "run", CLI, ...args], {
-    cwd: ROOT,
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [stdout, stderr] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-  ]);
-  const exitCode = await proc.exited;
-  return { stdout, stderr, exitCode };
-}
 
 describe("CLI: version", () => {
-  test("returns version string", async () => {
-    const { stdout, exitCode } = await runCli(["version"]);
-    expect(exitCode).toBe(0);
-    expect(stdout.trim()).toMatch(/^super-aidlc v\d+\.\d+\.\d+$/);
+  test("returns version string", () => {
+    const version = getVersion();
+    expect(version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
 
 describe("CLI: validate", () => {
-  test("passes on healthy repo", async () => {
-    const { stdout, exitCode } = await runCli(["validate"]);
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("All checks passed");
+  test("passes on healthy repo", () => {
+    const result = validate();
+    expect(result.pass).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 });
 
-describe("CLI: metrics", () => {
-  test("handles --days=abc without crashing", async () => {
-    const { exitCode } = await runCli(["metrics", "--days=abc"]);
-    // Should not crash -- should either use default or show error
-    expect(exitCode).toBe(0);
+describe("CLI: parseDays", () => {
+  test("handles --days=abc without crashing", () => {
+    expect(parseDays(["metrics", "--days=abc"])).toBe(30);
   });
 
-  test("handles --days=0 gracefully", async () => {
-    const { exitCode } = await runCli(["metrics", "--days=0"]);
-    expect(exitCode).toBe(0);
+  test("handles --days=0 gracefully", () => {
+    expect(parseDays(["metrics", "--days=0"])).toBe(30);
   });
 
-  test("handles --days=-5 gracefully", async () => {
-    const { exitCode } = await runCli(["metrics", "--days=-5"]);
-    expect(exitCode).toBe(0);
+  test("handles --days=-5 gracefully", () => {
+    expect(parseDays(["metrics", "--days=-5"])).toBe(30);
   });
-});
 
-describe("CLI: default (no args)", () => {
-  test("shows help with commands list", async () => {
-    const { stdout, exitCode } = await runCli([]);
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Commands:");
-    expect(stdout).toContain("validate");
-    expect(stdout).toContain("metrics");
-    expect(stdout).toContain("version");
+  test("accepts valid positive integer", () => {
+    expect(parseDays(["metrics", "--days=60"])).toBe(60);
+  });
+
+  test("defaults to 30 when no flag", () => {
+    expect(parseDays(["metrics"])).toBe(30);
   });
 });
 
-describe("CLI: unknown command", () => {
-  test("shows help for unknown command", async () => {
-    const { stdout, exitCode } = await runCli(["nonexistent"]);
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Commands:");
+describe("CLI: help output", () => {
+  test("formatHelp contains commands list", () => {
+    const version = getVersion();
+    const output = formatHelp(version);
+    expect(output).toContain("Commands:");
+    expect(output).toContain("validate");
+    expect(output).toContain("metrics");
+    expect(output).toContain("version");
+  });
+
+  test("formatHelp includes version", () => {
+    const output = formatHelp("1.2.3");
+    expect(output).toContain("v1.2.3");
   });
 });
-
-// ---------------------------------------------------------------------------
-// Additional tests
-// ---------------------------------------------------------------------------
 
 describe("CLI: validate details", () => {
-  test("output includes skill and agent counts", async () => {
-    const { stdout, exitCode } = await runCli(["validate"]);
-    expect(exitCode).toBe(0);
-    // Format: "✓ All checks passed (N skills, N agents, vX.Y.Z)"
-    expect(stdout).toMatch(/\d+ skills/);
-    expect(stdout).toMatch(/\d+ agents/);
+  test("formatValidateOutput includes skill and agent counts", () => {
+    const result = validate();
+    const output = formatValidateOutput(result);
+    expect(output).toMatch(/\d+ skills/);
+    expect(output).toMatch(/\d+ agents/);
   });
 
-  test("output mentions the version number", async () => {
+  test("formatValidateOutput mentions the version number", () => {
     const version = readFileSync(resolve(ROOT, "VERSION"), "utf-8").trim();
-    const { stdout, exitCode } = await runCli(["validate"]);
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain(`v${version}`);
+    const result = validate();
+    const output = formatValidateOutput(result);
+    expect(output).toContain(`v${version}`);
+  });
+
+  test("formatValidateOutput for failure lists errors", () => {
+    const failResult = {
+      pass: false,
+      errors: ["Missing SKILL.md in skills/foo/", "Bad frontmatter in skills/bar/"],
+      skillCount: 0,
+      agentCount: 0,
+      version: "0.0.0",
+    };
+    const output = formatValidateOutput(failResult);
+    expect(output).toContain("2 issues found");
+    expect(output).toContain("Missing SKILL.md");
+    expect(output).toContain("Bad frontmatter");
   });
 });
 
 describe("CLI: metrics with build logs", () => {
   const tmpDir = join("/tmp", `super-aidlc-test-${Date.now()}`);
   const sessionName = "2026-04-10-fake-feature";
-  const sessionDir = join(tmpDir, "aidlc-docs", sessionName);
+  const aidlcDocsDir = join(tmpDir, "aidlc-docs");
+  const sessionDir = join(aidlcDocsDir, sessionName);
 
-  // Create a temporary aidlc-docs directory with a fake build log before tests
   const buildLogContent = [
     "# Build Log: fake-feature",
     "",
@@ -128,65 +127,58 @@ describe("CLI: metrics with build logs", () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  async function runCliInDir(args: string[], cwd: string): Promise<{
-    stdout: string;
-    stderr: string;
-    exitCode: number;
-  }> {
-    const proc = Bun.spawn(["bun", "run", CLI, ...args], {
-      cwd,
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const [stdout, stderr] = await Promise.all([
-      new Response(proc.stdout).text(),
-      new Response(proc.stderr).text(),
-    ]);
-    const exitCode = await proc.exited;
-    return { stdout, stderr, exitCode };
-  }
-
-  test("finds and parses build log from aidlc-docs", async () => {
-    const { stdout, exitCode } = await runCliInDir(
-      ["metrics", "--days=30"],
-      tmpDir,
-    );
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("fake-feature");
-    expect(stdout).toContain("tdd");
-    expect(stdout).toContain("1 sessions");
+  test("finds and parses build log from aidlc-docs", () => {
+    const result = computeMetrics(30, aidlcDocsDir);
+    expect(result.aidlcDocsExists).toBe(true);
+    expect(result.sessions).toHaveLength(1);
+    const session = result.sessions[0]!;
+    expect(session.slug).toBe("fake-feature");
+    expect(session.strategy).toBe("tdd");
+    expect(session.testCount).toBe(5);
+    expect(session.issueCount).toBe(1);
   });
 
-  test("build log metrics table includes expected columns", async () => {
-    const { stdout, exitCode } = await runCliInDir(
-      ["metrics", "--days=30"],
-      tmpDir,
-    );
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Date");
-    expect(stdout).toContain("Feature");
-    expect(stdout).toContain("Strategy");
-    expect(stdout).toContain("Tests");
-    expect(stdout).toContain("Issues");
-    expect(stdout).toContain("Score");
+  test("formatted output table includes expected columns", () => {
+    const result = computeMetrics(30, aidlcDocsDir);
+    const output = formatMetricsOutput(result);
+    expect(output).toContain("1 sessions");
+    expect(output).toContain("Date");
+    expect(output).toContain("Feature");
+    expect(output).toContain("Strategy");
+    expect(output).toContain("Tests");
+    expect(output).toContain("Issues");
+    expect(output).toContain("Score");
   });
 
-  test("displays averages when metrics are present", async () => {
-    const { stdout, exitCode } = await runCliInDir(
-      ["metrics", "--days=30"],
-      tmpDir,
-    );
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Avg tests/session:");
-    expect(stdout).toContain("Avg issues/session:");
+  test("formatted output displays averages when metrics are present", () => {
+    const result = computeMetrics(30, aidlcDocsDir);
+    const output = formatMetricsOutput(result);
+    expect(output).toContain("Avg tests/session:");
+    expect(output).toContain("Avg issues/session:");
+  });
+
+  test("formatted output shows 'no aidlc-docs' when missing", () => {
+    const result = computeMetrics(30, "/tmp/definitely-does-not-exist-xyz");
+    const output = formatMetricsOutput(result);
+    expect(output).toContain("No aidlc-docs/ found");
+  });
+
+  test("formatted output shows 'no build logs' when empty", () => {
+    const emptyDir = join("/tmp", `super-aidlc-empty-${Date.now()}`);
+    mkdirSync(emptyDir, { recursive: true });
+    try {
+      const result = computeMetrics(30, emptyDir);
+      const output = formatMetricsOutput(result);
+      expect(output).toContain("No build logs found");
+    } finally {
+      rmSync(emptyDir, { recursive: true, force: true });
+    }
   });
 });
 
 describe("CLI: version consistency", () => {
-  test("version command output matches VERSION file", async () => {
+  test("getVersion matches VERSION file", () => {
     const versionFile = readFileSync(resolve(ROOT, "VERSION"), "utf-8").trim();
-    const { stdout, exitCode } = await runCli(["version"]);
-    expect(exitCode).toBe(0);
-    expect(stdout.trim()).toBe(`super-aidlc v${versionFile}`);
+    expect(getVersion()).toBe(versionFile);
   });
 });

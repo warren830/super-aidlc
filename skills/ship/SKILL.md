@@ -9,6 +9,12 @@ model: opus
 
 Ship context: $ARGUMENTS
 
+## Prerequisite: Read `skills/verify/SKILL.md`
+
+Ship is the most dangerous point for false completion claims. Before running any command in this skill, read `skills/verify/SKILL.md`. Every "tests pass" / "build succeeds" claim below must quote fresh evidence from a command run in this message. No exceptions.
+
+**Iron Law**: If you did not run the verification command in this message, you cannot claim the result.
+
 ## Pre-Ship Verification (all must pass)
 
 ```bash

@@ -4,6 +4,12 @@
 
 This phase handles QA, shipping, and documentation updates. It runs after construction completes.
 
+## Prerequisite: Verify the build is green
+
+Before entering any section (QA, ship, docs), read `skills/verify/SKILL.md`. If you cannot quote fresh evidence that tests + build + lint pass in this message, go back to construction Step 6 first. A "completed" construction phase with stale verification is not complete.
+
+**Iron Law**: No operations work begins until construction's verification is fresh.
+
 ## Section 1: QA Testing (optional)
 
 The QA agent (`agents/qa.md`) supports three modes:

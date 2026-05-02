@@ -35,7 +35,35 @@ Complexity overrides (`--light`, `--medium`, `--heavy`) bypass auto-detection. U
 - You want minimal process for a well-understood change (`--light`)
 - You want full rigor for something that looks simple but has risk (`--heavy`)
 
-`--skip-review` and `--skip-tests` are escape hatches for non-code changes. If used with code changes, note the skip in the build log with the reason. Never skip both simultaneously.
+`--skip-review` is an escape hatch for trusted fixes (typos, single-line corrections, doc-only changes). Note the skip in the build log with the reason.
+
+`--skip-tests` is an **explicit Iron Law bypass** for the TDD rule in `skills/tdd/`. The default path enforces TDD. Use `--skip-tests` only for:
+- Documentation-only changes
+- Configuration that cannot meaningfully be unit-tested
+- Throwaway prototypes (tell the user; offer a follow-up to TDD-ify if it lives)
+- Generated code
+
+When `--skip-tests` is used, you MUST log the bypass reason in `build-log.md` under an "Iron Law Bypasses" section (template in `phases/construction.md` Step 8). Never skip both `--skip-tests` and `--skip-review` simultaneously.
+
+## Red Flags — STOP, You're Rationalizing
+
+Agents are prone to shortcuts. Before starting a task, or before claiming work is done, check yourself against these thoughts:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for relevant skills. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Load the skill first. |
+| "I know what the code should do" | Read it anyway. Evidence > assumption. |
+| "I'll add tests later" | Tests added later prove nothing. See `skills/tdd/`. |
+| "Should work now" / "Looks correct" | Run verification in this message. See `skills/verify/`. |
+| "Linter passed, build probably works" | Linter ≠ compiler. Run the build. |
+| "Agent reported success" | Verify independently — check the diff. |
+| "The skill is overkill for this" | If the skill applies, use it. |
+| "Just this once" / "This is different because..." | No exceptions. |
+
+If any thought above matches what you're about to do: **STOP** and re-read the relevant skill.
+
+**Iron Law**: Violating the letter of this rule is violating the spirit of this rule.
 
 ## Language Selection
 
