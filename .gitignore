@@ -4,6 +4,10 @@ bun.lock
 .claude/
 .idea/
 
+# Local-only: not uploaded to GitHub
+aidlc-docs/
+docs/superpowers/
+
 # Symlink artifacts from install script
 agents/agents
 phases/phases
